@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <title>Cape Creator</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="icon" type="image/png" sizes="32x32" href="muhehehe.png">
 </head>
 <body>
 
@@ -14,6 +13,9 @@
 
     <label>Select image for the "Front":</label><br>
     <input type="file" id="frontImageInput" accept="image/*"><br>
+
+    <label>Select image for the "Back":</label><br>
+    <input type="file" id="backImageInput" accept="image/*"><br>
 
     <label>Cape color:</label><br>
     <input type="color" id="colorPicker" value="#ff00ff"><br>
@@ -37,6 +39,7 @@
     </div>
 
     <button id="downloadBtn">Download Cape</button>
+    <button id="resetBtn">Reset</button>
 </div>
 
 <canvas id="capeCanvas" width="512" height="256"></canvas>
@@ -50,11 +53,17 @@ const canvas = document.getElementById("capeCanvas");
 const ctx = canvas.getContext("2d");
 
 let frontImage = null;
+let backImage = null;
 
 const FRONT_X = 8;
 const FRONT_Y = 8;
 const FRONT_W = 80;
 const FRONT_H = 128;
+
+const BACK_X = 96;
+const BACK_Y = 8;
+const BACK_W = 80;
+const BACK_H = 128;
 
 templateImg.onload = () => drawCape();
 
@@ -69,7 +78,7 @@ function createGradient() {
         grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
     } else if (dir === "horizontal") {
         grad = ctx.createLinearGradient(0, 0, canvas.width, 0);
-    } else if (dir === "diag1") { 
+    } else if (dir === "diag1") {
         grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
     } else if (dir === "diag2") {
         grad = ctx.createLinearGradient(canvas.width, 0, 0, canvas.height);
@@ -109,13 +118,16 @@ function drawCape() {
         ctx.drawImage(frontImage, FRONT_X, FRONT_Y, FRONT_W, FRONT_H);
     }
 
+    if (backImage) {
+        ctx.drawImage(backImage, BACK_X, BACK_Y, BACK_W, BACK_H);
+    }
+
     ctx.globalCompositeOperation = "source-over";
 }
 
 document.getElementById("enableGradient").addEventListener("change", () => {
     document.getElementById("gradientControls").style.display =
         document.getElementById("enableGradient").checked ? "block" : "none";
-
     drawCape();
 });
 
@@ -137,11 +149,49 @@ document.getElementById("frontImageInput").addEventListener("change", e => {
     };
 });
 
+document.getElementById("backImageInput").addEventListener("change", e => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const img = new Image();
+    img.src = URL.createObjectURL(file);
+    img.onload = () => {
+        backImage = img;
+        drawCape();
+    };
+});
+
 document.getElementById("downloadBtn").addEventListener("click", () => {
     const link = document.createElement("a");
     link.download = "custom_cape.png";
     link.href = canvas.toDataURL();
     link.click();
+});
+
+document.getElementById("resetBtn").addEventListener("click", () => {
+
+    // Reset internal images
+    frontImage = null;
+    backImage = null;
+
+    // Reset input fields
+    document.getElementById("frontImageInput").value = "";
+    document.getElementById("backImageInput").value = "";
+
+    // Reset primary color
+    document.getElementById("colorPicker").value = "#ff00ff";
+
+    // Reset gradient toggle
+    document.getElementById("enableGradient").checked = false;
+    document.getElementById("gradientControls").style.display = "none";
+
+    // Reset gradient colors and direction
+    document.getElementById("gradColor1").value = "#ff00ff";
+    document.getElementById("gradColor2").value = "#0000ff";
+    document.getElementById("gradDirection").value = "vertical";
+
+    // Redraw cape with defaults
+    drawCape();
 });
 </script>
 
