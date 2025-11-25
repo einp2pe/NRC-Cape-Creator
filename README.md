@@ -6,7 +6,7 @@ Designing Minecraft capes doesn’t have to be complicated. **NRC Cape Creator**
 
 ## How you use it
 
-1. **Open `index.html`** — no install, no setup.  
+1. **Open `index.html`** [NRC Cape Creator](https://einp2pe.github.io/NRC-Cape-Creator/) — no install, no setup.  
 2. **Upload images** for the front, back, or Elytra.  
 3. **Pick colors** or switch on gradient mode.  
 4. **Preview** your cape in real time.  
