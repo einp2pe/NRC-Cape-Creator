@@ -14,7 +14,7 @@ const ImageCropper: FC<ImageCropperProps> = ({
   label,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const imageRef = useRef<HTMLImageElement>(null)
+  const imageRef = useRef<HTMLImageElement | null>(null)
   const [startPos, setStartPos] = useState<{ x: number; y: number } | null>(null)
   const [endPos, setEndPos] = useState<{ x: number; y: number } | null>(null)
   const [isDrawing, setIsDrawing] = useState(false)
