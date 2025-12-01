@@ -67,6 +67,13 @@
       emojiJitter?: number
       emojiApplyToElytra?: boolean
       emojiSeed?: number
+      textColor?: string
+      textStrokeEnabled?: boolean
+      textStrokeColor?: string
+      textStrokeWidth?: number
+      textFont?: string
+      textBold?: boolean
+      textItalic?: boolean
     }
   ): void {
     const ctx = canvas.getContext('2d')
@@ -103,11 +110,40 @@
       const applyToElytra = options.emojiApplyToElytra !== false
       const seed = options.emojiSeed || 0
 
+      // Text style options
+      const textColor = options.textColor || '#ffffff'
+      const textStrokeEnabled = !!options.textStrokeEnabled
+      const textStrokeColor = options.textStrokeColor || '#000000'
+      const textStrokeWidth = options.textStrokeWidth || 2
+      const textFont = options.textFont || 'sans-serif'
+      const textBold = !!options.textBold
+      const textItalic = !!options.textItalic
+
       ctx.save()
       ctx.globalAlpha = opacity
-      ctx.font = `${size}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`
+
+      // Build font string
+      let fontStyle = ''
+      if (textItalic) fontStyle += 'italic '
+      if (textBold) fontStyle += 'bold '
+      fontStyle += `${size}px `
+      // Use emoji fonts for pure emoji (single emoji character), otherwise use selected font
+      // Improved emoji detection: check if it's a single grapheme that is an emoji
+      const emojiRegex = /^(\p{Emoji_Presentation}|\p{Emoji}\uFE0F)(\u200D(\p{Emoji_Presentation}|\p{Emoji}\uFE0F))*$/u
+      const isEmoji = emojiRegex.test(emoji) && [...emoji].length <= 7 // ZWJ sequences can be long
+      if (isEmoji) {
+        fontStyle += '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif'
+      } else {
+        fontStyle += `"${textFont}", sans-serif`
+      }
+      ctx.font = fontStyle
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
+      ctx.fillStyle = textColor
+      if (textStrokeEnabled) {
+        ctx.strokeStyle = textStrokeColor
+        ctx.lineWidth = textStrokeWidth
+      }
 
       const rand = (x: number, y: number) => {
         // deterministic pseudo-random based on coordinates and seed
@@ -150,6 +186,9 @@
           ctx.save()
           ctx.translate(px, py)
           if (angle !== 0) ctx.rotate(angle)
+          if (textStrokeEnabled) {
+            ctx.strokeText(emoji as string, 0, 0)
+          }
           ctx.fillText(emoji as string, 0, 0)
           ctx.restore()
         }

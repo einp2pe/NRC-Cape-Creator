@@ -28,6 +28,20 @@ interface ControlsProps {
   setEmojiJitter: (v: number) => void
   setEmojiApplyToElytra: (v: boolean) => void
   setEmojiSeed: (v: number) => void
+  textColor: string
+  textStrokeEnabled: boolean
+  textStrokeColor: string
+  textStrokeWidth: number
+  textFont: string
+  textBold: boolean
+  textItalic: boolean
+  setTextColor: (v: string) => void
+  setTextStrokeEnabled: (v: boolean) => void
+  setTextStrokeColor: (v: string) => void
+  setTextStrokeWidth: (v: number) => void
+  setTextFont: (v: string) => void
+  setTextBold: (v: boolean) => void
+  setTextItalic: (v: boolean) => void
 }
 
 export default ControlsProps

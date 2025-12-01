@@ -6,205 +6,182 @@
 
 html, body, #root {
   width: 100%;
-  height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh; /* Dynamic viewport height for mobile */
 }
 
 body {
   font-family: 'Segoe UI', 'Helvetica Neue', -apple-system, BlinkMacSystemFont, sans-serif;
   background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0f0f0f 100%);
   color: #fff;
-  padding: 20px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  overflow-x: hidden;
-  position: relative;
-  width: 100vw;
-}
-
-/* Animated background orbs - subtle for dark theme */
-body::before {
-  content: '';
-  position: fixed;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.03) 0%, transparent 50%),
-              radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.02) 0%, transparent 50%),
-              radial-gradient(circle at 40% 80%, rgba(255, 255, 255, 0.02) 0%, transparent 50%);
-  animation: moveGradient 15s ease-in-out infinite;
-  z-index: -1;
-  pointer-events: none;
-}
-
-@keyframes moveGradient {
-  0%, 100% {
-    transform: translate(0, 0);
-  }
-  50% {
-    transform: translate(-50px, -50px);
-  }
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 #root {
   display: flex;
-  justify-content: center;
-  align-items: center;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* ===== APP LAYOUT ===== */
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: clamp(12px, 3vw, 24px);
+  gap: clamp(12px, 2vw, 20px);
+  max-width: 1600px;
+  margin: 0 auto;
   width: 100%;
 }
 
-.wrapper {
+.app-header {
+  display: flex;
+  justify-content: center;
+  padding: clamp(4px, 1vw, 12px) 0;
+  flex-shrink: 0;
+}
+
+.logo {
+  height: clamp(50px, 12vw, 140px);
+  width: auto;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4));
+}
+
+.app-main {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 30px;
-  width: 100%;
-  max-width: 100%;
-  z-index: 1;
-  min-height: 100vh;
+  gap: clamp(16px, 3vw, 28px);
+  flex: 1;
 }
 
-.container {
+/* ===== PREVIEW PANEL ===== */
+.preview-panel {
   display: flex;
-  gap: 40px;
-  align-items: flex-start; /* keep items pinned to top */
   justify-content: center;
-  width: 100%;
-  flex-wrap: wrap;
-  padding: 0 20px;
-}
-
-h1 {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #ffffff;
-  text-align: center;
-  letter-spacing: -0.5px;
-  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  margin-bottom: 10px;
-  animation: fadeInDown 0.8s ease-out;
-}
-
-.logo-container {
-  display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 15px;
-  margin-bottom: 0px;
-  animation: fadeInDown 0.8s ease-out;
-}
-
-.logo-img {
-  height: 300px;
-  width: auto;
-  object-fit: contain;
-  filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.5));
-}
-
-@keyframes fadeInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  background: rgba(20, 20, 24, 0.8);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: clamp(12px, 2vw, 20px);
+  padding: clamp(20px, 4vw, 40px);
+  margin: 0;
+  width: 100%;
+  max-width: 1000px;
 }
 
 .cape-canvas {
-  border: 2px solid #333;
-  border-radius: 12px;
   width: 100%;
-  max-width: 900px;
+  max-width: 800px;
   height: auto;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 
-              0 0 100px rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  transition: all 0.3s ease;
-  animation: fadeInUp 0.8s ease-out 0.2s both;
-  flex-shrink: 0;
+  border-radius: 8px;
+  border: 2px solid rgba(255,255,255,0.15);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  image-rendering: pixelated;
   display: block;
 }
 
-.cape-canvas:hover {
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), 
-              0 0 120px rgba(255, 255, 255, 0.1);
-  transform: translateY(-5px);
-  border-color: #555;
+/* ===== CONTROLS ROW ===== */
+.controls-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(12px, 2vw, 20px);
+  align-items: start;
+  width: 100%;
+  max-width: 1000px;
 }
 
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
+/* ===== ULTRA-WIDE SCREENS (21:9, 32:9) ===== */
+@media (min-aspect-ratio: 2/1) {
+  .preview-panel {
+    max-width: 800px;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+  
+  .controls-row {
+    max-width: 1200px;
   }
 }
 
-@media (max-width: 1024px) {
-  .container {
-    flex-direction: column;
-    gap: 30px;
-  }
-
+/* ===== DESKTOP ===== */
+@media (min-width: 1000px) {
   .cape-canvas {
-    width: 100%;
-    max-width: 550px;
+    max-width: 800px;
   }
 }
 
-@media (max-width: 768px) {
-  h1 {
-    font-size: 2.5rem;
-  }
-
-  .logo-img {
-    height: 200px;
-  }
-
-  .wrapper {
-    gap: 20px;
-  }
-
-  .container {
-    flex-direction: column;
-    gap: 20px;
-  }
-
-  .cape-canvas {
-    width: 100%;
-    max-width: 100%;
-  }
-
-  body {
-    padding: 15px;
+/* ===== TABLET PORTRAIT & PHONES ===== */
+@media (max-width: 700px) {
+  .controls-row {
+    grid-template-columns: 1fr;
   }
 }
 
-@media (max-width: 480px) {
-  .logo-img {
-    height: 150px;
+/* ===== PHONE PORTRAIT ===== */
+@media (max-width: 500px) {
+  .app {
+    padding: 10px;
+    gap: 10px;
   }
-
-  .wrapper {
-    gap: 15px;
+  
+  .preview-panel {
+    padding: 12px;
+    border-radius: 12px;
   }
-
-  .container {
-    gap: 15px;
-    padding: 0 10px;
-  }
-
+  
   .cape-canvas {
-    width: 100%;
-    max-width: 100%;
+    border-radius: 6px;
+  }
+}
+
+/* ===== TALL PHONES (19.5:9, 20:9, 21:9) ===== */
+@media (max-width: 500px) and (min-aspect-ratio: 9/18) {
+  .app-header {
+    padding: 2px 0;
+  }
+  
+  .logo {
+    height: 45px;
+  }
+  
+  .preview-panel {
+    padding: 10px;
+  }
+}
+
+/* ===== iOS SAFE AREAS ===== */
+@supports (padding: max(0px)) {
+  .app {
+    padding-left: max(12px, env(safe-area-inset-left));
+    padding-right: max(12px, env(safe-area-inset-right));
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+}
+
+/* ===== LANDSCAPE PHONES ===== */
+@media (max-height: 500px) and (orientation: landscape) {
+  .app {
+    padding: 8px 16px;
+    gap: 8px;
+  }
+  
+  .app-header {
+    display: none;
+  }
+  
+  .preview-panel {
+    padding: 12px;
+  }
+  
+  .cape-canvas {
+    max-width: 400px;
+  }
+  
+  .controls-row {
+    grid-template-columns: 1fr 1fr;
   }
 }
 

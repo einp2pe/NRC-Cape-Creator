@@ -16,6 +16,13 @@ export const useCapeState = () => {
   const [emojiJitter, setEmojiJitter] = useState<number>(0)
   const [emojiApplyToElytra, setEmojiApplyToElytra] = useState<boolean>(true)
   const [emojiSeed, setEmojiSeed] = useState<number>(0)
+  const [textColor, setTextColor] = useState<string>('#000000')
+  const [textStrokeEnabled, setTextStrokeEnabled] = useState<boolean>(false)
+  const [textStrokeColor, setTextStrokeColor] = useState<string>('#000000')
+  const [textStrokeWidth, setTextStrokeWidth] = useState<number>(2)
+  const [textFont, setTextFont] = useState<string>('sans-serif')
+  const [textBold, setTextBold] = useState<boolean>(false)
+  const [textItalic, setTextItalic] = useState<boolean>(false)
 
   const reset = () => {
     setFrontImage(null)
@@ -33,6 +40,13 @@ export const useCapeState = () => {
     setEmojiJitter(0)
     setEmojiApplyToElytra(true)
     setEmojiSeed(0)
+    setTextColor('#000000')
+    setTextStrokeEnabled(false)
+    setTextStrokeColor('#000000')
+    setTextStrokeWidth(2)
+    setTextFont('sans-serif')
+    setTextBold(false)
+    setTextItalic(false)
   }
 
   return {
@@ -66,6 +80,20 @@ export const useCapeState = () => {
     setEmojiJitter,
     setEmojiApplyToElytra,
     setEmojiSeed,
+    textColor,
+    textStrokeEnabled,
+    textStrokeColor,
+    textStrokeWidth,
+    textFont,
+    textBold,
+    textItalic,
+    setTextColor,
+    setTextStrokeEnabled,
+    setTextStrokeColor,
+    setTextStrokeWidth,
+    setTextFont,
+    setTextBold,
+    setTextItalic,
     reset,
   }
 }
