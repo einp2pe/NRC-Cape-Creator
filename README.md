@@ -78,7 +78,7 @@ Built-in safety system that blocks:
 
 ## 🖥️ Demo
 
-**🔗 Live Demo:** [https://einp2pe.github.io/NRC-Cape-Creator/](https://einp2pe.github.io/NRC-Cape-Creator/)
+**🔗 Live Demo:** [NRC Cape Creator](https://einp2pe.github.io/NRC-Cape-Creator/)
 
 ---
 
