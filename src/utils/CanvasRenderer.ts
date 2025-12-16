@@ -18,6 +18,25 @@
   private readonly ELYTRA_W = 80
   private readonly ELYTRA_H = 160
 
+  // Template "bottom" strip (maps to front of cape)
+  // In template: 88,0 to 167,7 (80x8 pixels)
+  // Rendered on cape front: 8,8 to 87,135 (80x128 pixels)
+  private readonly BOTTOM_STRIP_X = 88
+  private readonly BOTTOM_STRIP_Y = 0
+  private readonly BOTTOM_STRIP_W = 80
+  private readonly BOTTOM_STRIP_H = 8
+
+  // Elytra "bottom" strip (maps to below elytra)
+  // In template: 272,0 to 319,7 (48x8 pixels)
+  // Rendered below elytra: 320,176 to 367,183 (48x8 pixels)
+  private readonly ELYTRA_BOTTOM_STRIP_X = 272
+  private readonly ELYTRA_BOTTOM_STRIP_Y = 0
+  private readonly ELYTRA_BOTTOM_STRIP_W = 48
+  private readonly ELYTRA_BOTTOM_STRIP_H = 8
+  // Where it actually renders (continuation area)
+  private readonly ELYTRA_CONTINUATION_X = 320
+  private readonly ELYTRA_CONTINUATION_Y = 176
+
   private constructor() {
     this.initTemplate()
   }
@@ -104,6 +123,23 @@
     ctx.fillStyle = capeGradient
     ctx.fillRect(CAPE_FILL_X, CAPE_FILL_Y, CAPE_FILL_W, CAPE_FILL_H)
 
+    // Bottom strip area (maps to front): continues below front area
+    // The strip at 88,0 to 167,7 represents Y=136 to Y=143 below front (continuation)
+    // Gradient should continue from where front ends
+    const bottomStripGradient = this.createContinuationGradient(
+      ctx,
+      this.BOTTOM_STRIP_X,
+      this.BOTTOM_STRIP_Y,
+      this.BOTTOM_STRIP_W,
+      this.BOTTOM_STRIP_H,
+      gradientColors,
+      gradDirection,
+      this.FRONT_H,  // front height (where we continue from)
+      this.BOTTOM_STRIP_H  // strip height (continuation length)
+    )
+    ctx.fillStyle = bottomStripGradient
+    ctx.fillRect(this.BOTTOM_STRIP_X, this.BOTTOM_STRIP_Y, this.BOTTOM_STRIP_W, this.BOTTOM_STRIP_H)
+
     // Elytra area: fill 176,0 to 368,176, gradient starts at 272,16
     const ELYTRA_FILL_X = 176
     const ELYTRA_FILL_Y = 0
@@ -116,6 +152,23 @@
     const elytraGradient = this.createGradientAt(ctx, ELYTRA_GRAD_START_X, ELYTRA_GRAD_START_Y, ELYTRA_GRAD_W, ELYTRA_GRAD_H, gradientColors, gradDirection)
     ctx.fillStyle = elytraGradient
     ctx.fillRect(ELYTRA_FILL_X, ELYTRA_FILL_Y, ELYTRA_FILL_W, ELYTRA_FILL_H)
+
+    // Elytra bottom strip area: continues below elytra area
+    // The strip at 272,0 to 319,7 represents Y=176 to Y=183 below elytra (continuation)
+    // Gradient should continue from where elytra ends
+    const elytraBottomStripGradient = this.createContinuationGradient(
+      ctx,
+      this.ELYTRA_BOTTOM_STRIP_X,
+      this.ELYTRA_BOTTOM_STRIP_Y,
+      this.ELYTRA_BOTTOM_STRIP_W,
+      this.ELYTRA_BOTTOM_STRIP_H,
+      gradientColors,
+      gradDirection,
+      this.ELYTRA_H,  // elytra height (where we continue from)
+      this.ELYTRA_BOTTOM_STRIP_H  // strip height (continuation length)
+    )
+    ctx.fillStyle = elytraBottomStripGradient
+    ctx.fillRect(this.ELYTRA_BOTTOM_STRIP_X, this.ELYTRA_BOTTOM_STRIP_Y, this.ELYTRA_BOTTOM_STRIP_W, this.ELYTRA_BOTTOM_STRIP_H)
 
     // Draw emoji tiled pattern above the color but below user images
     if (options?.emojiEnabled && options?.emoji) {
@@ -140,6 +193,18 @@
 
       ctx.save()
       ctx.globalAlpha = opacity
+
+      // Create clipping region that excludes the strip areas (88,0 to 167,7) and (272,0 to 319,7) and (176,88 to 183,175)
+      ctx.beginPath()
+      // Draw the entire canvas area
+      ctx.rect(0, 0, canvas.width, canvas.height)
+      // Cut out excluded strip 1: 88,0 to 168,8
+      ctx.rect(88, 0, 80, 8)
+      // Cut out excluded strip 2: 272,0 to 320,8
+      ctx.rect(272, 0, 48, 8)
+      // Cut out excluded area 3: 176,88 to 183,175 (8x88)
+      ctx.rect(176, 88, 8, 88)
+      ctx.clip('evenodd')
 
       // Build font string
       let fontStyle = ''
@@ -168,6 +233,27 @@
         // deterministic pseudo-random based on coordinates and seed
         const s = Math.sin(x * 12.9898 + y * 78.233 + seed) * 43758.5453
         return s - Math.floor(s)
+      }
+
+      // Map "below front" coordinates to bottom strip coordinates
+      // Below front: Y=136-143 (continuation) -> Bottom strip: 88,0 to 167,7
+      // X stays same relative position, Y maps 136-143 to 0-7
+      const mapBelowFrontToBottomStrip = (belowX: number, belowY: number) => {
+        const relX = belowX - this.FRONT_X  // 0-79 (same X as front)
+        const relY = belowY - (this.FRONT_Y + this.FRONT_H)  // 0-7 (Y below front)
+        const stripX = this.BOTTOM_STRIP_X + relX  // 88-167
+        const stripY = this.BOTTOM_STRIP_Y + relY  // 0-7
+        return { x: stripX, y: stripY }
+      }
+
+      // Map "below elytra" coordinates to elytra bottom strip coordinates
+      // Below elytra: 320,176 to 367,183 -> Elytra bottom strip: 272,0 to 319,7
+      const mapBelowElytraToBottomStrip = (belowX: number, belowY: number) => {
+        const relX = belowX - this.ELYTRA_CONTINUATION_X  // 0-47
+        const relY = belowY - this.ELYTRA_CONTINUATION_Y  // 0-7
+        const stripX = this.ELYTRA_BOTTOM_STRIP_X + relX  // 272-319
+        const stripY = this.ELYTRA_BOTTOM_STRIP_Y + relY  // 0-7
+        return { x: stripX, y: stripY }
       }
 
       // Emoji covers entire gradient area (cape + elytra = 0,0 to 368,176)
@@ -214,6 +300,44 @@
           }
           ctx.fillText(emoji as string, 0, 0)
           ctx.restore()
+
+          // Also draw in bottom strip if this emoji is in the "below front" area
+          // Below front: X=8-87, Y=136-143 (continuation of front)
+          const belowFrontStartY = this.FRONT_Y + this.FRONT_H  // 136
+          const belowFrontEndY = belowFrontStartY + this.BOTTOM_STRIP_H  // 144
+          const isInBelowFrontArea = px >= this.FRONT_X && px <= this.FRONT_X + this.FRONT_W &&
+                                     py >= belowFrontStartY && py < belowFrontEndY
+          if (isInBelowFrontArea) {
+            const mapped = mapBelowFrontToBottomStrip(px, py)
+
+            ctx.save()
+            ctx.translate(mapped.x, mapped.y)
+            if (angle !== 0) ctx.rotate(angle)
+            if (textStrokeEnabled) {
+              ctx.strokeText(emoji as string, 0, 0)
+            }
+            ctx.fillText(emoji as string, 0, 0)
+            ctx.restore()
+          }
+
+          // Also draw in elytra bottom strip if this emoji is in the "below elytra" area
+          // Below elytra: X=320-367, Y=176-183 (continuation of elytra)
+          const isInBelowElytraArea = px >= this.ELYTRA_CONTINUATION_X && 
+                                      px < this.ELYTRA_CONTINUATION_X + this.ELYTRA_BOTTOM_STRIP_W &&
+                                      py >= this.ELYTRA_CONTINUATION_Y && 
+                                      py < this.ELYTRA_CONTINUATION_Y + this.ELYTRA_BOTTOM_STRIP_H
+          if (isInBelowElytraArea) {
+            const mapped = mapBelowElytraToBottomStrip(px, py)
+
+            ctx.save()
+            ctx.translate(mapped.x, mapped.y)
+            if (angle !== 0) ctx.rotate(angle)
+            if (textStrokeEnabled) {
+              ctx.strokeText(emoji as string, 0, 0)
+            }
+            ctx.fillText(emoji as string, 0, 0)
+            ctx.restore()
+          }
         }
       }
 
@@ -301,6 +425,90 @@
     }
 
     return gradient
+  }
+
+  // Create a gradient that continues from where the front area ends
+  // This is used for the bottom strip which represents Y=136+ (below front)
+  private createContinuationGradient(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    colors: string[],
+    direction: 'vertical' | 'horizontal',
+    frontHeight: number,
+    stripHeight: number
+  ): CanvasGradient {
+    let gradient: CanvasGradient
+
+    if (direction === 'vertical') {
+      // For vertical gradient, we need to show the colors that would appear
+      // at Y=136 to Y=143 if the gradient continued past the front area
+      // The front area is 128px, strip is 8px, so we're showing 128/136 to 136/136 of the gradient
+      gradient = ctx.createLinearGradient(x, y, x, y + height)
+    } else {
+      // For horizontal gradient, just continue the same gradient
+      gradient = ctx.createLinearGradient(x, y, x + width, y)
+    }
+
+    if (colors.length === 0) {
+      gradient.addColorStop(0, '#002aff')
+      gradient.addColorStop(1, '#002aff')
+    } else if (colors.length === 1) {
+      gradient.addColorStop(0, colors[0])
+      gradient.addColorStop(1, colors[0])
+    } else {
+      if (direction === 'vertical') {
+        // Calculate where in the overall gradient we are (128-136 out of 136 total)
+        const totalHeight = frontHeight + stripHeight  // 136
+        const startRatio = frontHeight / totalHeight   // 128/136 ≈ 0.941
+        const endRatio = 1.0                           // 136/136 = 1.0
+        
+        // Interpolate colors for this portion of the gradient
+        const n = colors.length - 1
+        
+        // Find the color at startRatio and endRatio
+        const getColorAtRatio = (ratio: number) => {
+          const pos = ratio * n
+          const lowerIdx = Math.floor(pos)
+          const upperIdx = Math.min(lowerIdx + 1, n)
+          const t = pos - lowerIdx
+          return this.interpolateColor(colors[lowerIdx], colors[upperIdx], t)
+        }
+        
+        gradient.addColorStop(0, getColorAtRatio(startRatio))
+        gradient.addColorStop(1, getColorAtRatio(endRatio))
+      } else {
+        // Horizontal: same as normal gradient
+        const n = colors.length - 1
+        colors.forEach((color, i) => {
+          gradient.addColorStop(i / n, color)
+        })
+      }
+    }
+
+    return gradient
+  }
+
+  // Helper to interpolate between two hex colors
+  private interpolateColor(color1: string, color2: string, t: number): string {
+    const hex1 = color1.replace('#', '')
+    const hex2 = color2.replace('#', '')
+    
+    const r1 = parseInt(hex1.substring(0, 2), 16)
+    const g1 = parseInt(hex1.substring(2, 4), 16)
+    const b1 = parseInt(hex1.substring(4, 6), 16)
+    
+    const r2 = parseInt(hex2.substring(0, 2), 16)
+    const g2 = parseInt(hex2.substring(2, 4), 16)
+    const b2 = parseInt(hex2.substring(4, 6), 16)
+    
+    const r = Math.round(r1 + (r2 - r1) * t)
+    const g = Math.round(g1 + (g2 - g1) * t)
+    const b = Math.round(b1 + (b2 - b1) * t)
+    
+    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
   }
 }
 
