@@ -4,11 +4,13 @@ import CanvasRenderer from './utils/CanvasRenderer'
 import LeftColumn from './components/LeftColumn'
 import MiddleColumn from './components/MiddleColumn'
 import TemplateGallery from './components/TemplateGallery'
+import CapePreview3D from './components/CapePreview3D'
 import { useCapeState } from './hooks/useCapeState'
 
 function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [showTemplates, setShowTemplates] = useState(false)
+  const [canvasVersion, setCanvasVersion] = useState(0)
   const {
     frontImage,
     backImage,
@@ -56,6 +58,7 @@ function App() {
     setTextItalic,
     reset,
     loadTemplate,
+      resetVersion,
   } = useCapeState()
 
   const renderer = CanvasRenderer.getInstance()
@@ -90,12 +93,49 @@ function App() {
         textItalic,
       }
     )
+    // Increment version to trigger 3D preview update
+    setCanvasVersion(v => v + 1)
   }, [frontImage, backImage, elytraImage, gradientColors, gradDirection, emojiEnabled, emoji, emojiSize, emojiSpacing, emojiOpacity, emojiRotation, emojiRandomRotation, emojiJitter, emojiApplyToElytra, emojiSeed, textColor, textStrokeEnabled, textStrokeColor, textStrokeWidth, textFont, textBold, textItalic, renderer])
 
-  // On first load, run the same routine as Reset
+    // Force redraw when resetVersion changes
+    useEffect(() => {
+      if (!canvasRef.current) return
+      renderer.drawCape(
+        canvasRef.current,
+        null,
+        null,
+        null,
+        ['#ffffff'],
+        'vertical',
+        {}
+      )
+      setCanvasVersion(v => v + 1)
+    }, [resetVersion])
+  // Force initial draw on mount
   useEffect(() => {
-    // Trigger the same state logic as clicking Reset
-    handleReset()
+    if (!canvasRef.current) return
+    
+    // Draw the initial cape
+    renderer.drawCape(
+      canvasRef.current,
+      null,
+      null,
+      null,
+      ['#ffffff'],
+      'vertical',
+      {}
+    )
+    
+    // Trigger 3D preview updates with delays to ensure it syncs
+    const timer1 = setTimeout(() => setCanvasVersion(v => v + 1), 100)
+    const timer2 = setTimeout(() => setCanvasVersion(v => v + 1), 300)
+    const timer3 = setTimeout(() => setCanvasVersion(v => v + 1), 500)
+    
+    return () => {
+      clearTimeout(timer1)
+      clearTimeout(timer2)
+      clearTimeout(timer3)
+    }
   }, [])
 
   const handleDownload = () => {
@@ -125,17 +165,24 @@ function App() {
       </header>
       
       <main className="app-main">
-        {/* Preview - large and prominent */}
-        <figure className="preview-panel">
-          <canvas
-            ref={canvasRef}
-            id="capeCanvas"
-            width={512}
-            height={256}
-            className="cape-canvas"
-            aria-label="Cape preview"
+        {/* Preview section with 2D canvas and 3D viewer */}
+        <div className="preview-section">
+          <figure className="preview-panel">
+            <canvas
+              ref={canvasRef}
+              id="capeCanvas"
+              width={512}
+              height={256}
+              className="cape-canvas"
+              aria-label="Cape texture preview"
+            />
+            <figcaption className="preview-label">Texture Layout</figcaption>
+          </figure>
+          <CapePreview3D 
+            capeCanvas={canvasRef.current} 
+            canvasVersion={canvasVersion}
           />
-        </figure>
+        </div>
 
         {/* Controls row: Image | Gradient side by side */}
         <div className="controls-row">

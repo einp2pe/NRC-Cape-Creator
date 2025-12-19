@@ -2,9 +2,9 @@
 .panel {
   background: var(--bg-secondary);
   backdrop-filter: blur(20px);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid rgba(255,255,255,0.04);
   border-radius: var(--radius-lg);
-  padding: clamp(16px, 3vw, 24px);
+  padding: clamp(14px, 2.6vw, 20px);
   box-shadow: var(--shadow-md);
   transition: var(--transition-base);
   position: relative;
@@ -94,9 +94,9 @@
   justify-content: center;
   gap: 6px;
   padding: clamp(14px, 3vw, 20px) clamp(8px, 1.5vw, 12px);
-  background: var(--bg-glass);
-  border: 2px dashed var(--border-light);
-  border-radius: var(--radius-md);
+  background: linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));
+  border: 1px dashed rgba(255,255,255,0.06);
+  border-radius: calc(var(--radius-md) - 2px);
   cursor: pointer;
   transition: var(--transition-base);
   min-height: 80px;
@@ -152,24 +152,24 @@
 
 .remove-image-btn {
   position: absolute;
-  top: -6px;
-  right: -6px;
-  width: 22px;
-  height: 22px;
+  top: 6px;
+  right: 6px;
+  width: 26px;
+  height: 26px;
   background: var(--accent-danger);
-  border: 2px solid var(--bg-primary);
+  border: 2px solid rgba(0,0,0,0.45);
   border-radius: 50%;
   color: #fff;
-  font-size: 12px;
-  font-weight: bold;
+  font-size: 13px;
+  font-weight: 700;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: var(--transition-bounce);
+  transition: transform var(--transition-fast), opacity var(--transition-fast);
   z-index: 10;
   opacity: 0;
-  transform: scale(0);
+  transform: scale(0.85);
 }
 
 .upload-slot-wrapper:hover .remove-image-btn {
@@ -203,8 +203,8 @@
   gap: 8px;
   position: relative;
   overflow: hidden;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  text-transform: none;
+  letter-spacing: 0.4px;
 }
 
 .btn::before {
@@ -223,7 +223,7 @@
 .btn-download {
   background: linear-gradient(135deg, var(--accent-success) 0%, #059669 100%);
   color: #fff;
-  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 6px 24px rgba(16, 185, 129, 0.18);
 }
 
 .btn-download:hover {
@@ -236,15 +236,24 @@
 }
 
 .btn-reset {
-  background: var(--bg-glass);
+  background: transparent;
   color: var(--text-secondary);
-  border: 1px solid var(--border-light);
+  border: 1px solid rgba(255,255,255,0.06);
 }
 
 .btn-reset:hover {
-  background: var(--bg-glass-hover);
+  background: rgba(255,255,255,0.02);
   color: var(--text-primary);
   border-color: var(--border-accent);
+}
+
+/* Focus states for accessibility */
+.panel :is(input,select,textarea,button):focus-visible {
+  outline: none;
+}
+.panel :is(input,select,textarea):focus {
+  box-shadow: 0 0 0 4px rgba(99,102,241,0.06);
+  border-color: var(--accent-primary);
 }
 
 /* ===== TAB NAVIGATION ===== */

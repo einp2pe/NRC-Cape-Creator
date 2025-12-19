@@ -4,6 +4,7 @@ import { CapeTemplate } from '../data/templates'
 export const useCapeState = () => {
   const [frontImage, setFrontImage] = useState<HTMLImageElement | null>(null)
   const [backImage, setBackImage] = useState<HTMLImageElement | null>(null)
+    const [resetVersion, setResetVersion] = useState<number>(0)
   const [elytraImage, setElytraImage] = useState<HTMLImageElement | null>(null)
   const [gradientColors, setGradientColors] = useState<string[]>(['#ffffff'])
   const [gradDirection, setGradDirection] = useState<'vertical' | 'horizontal'>('vertical')
@@ -48,6 +49,7 @@ export const useCapeState = () => {
     setTextFont('sans-serif')
     setTextBold(false)
     setTextItalic(false)
+      setResetVersion(v => v + 1)
   }
 
   const loadTemplate = (template: CapeTemplate) => {
@@ -121,5 +123,6 @@ export const useCapeState = () => {
     setTextItalic,
     reset,
     loadTemplate,
+      resetVersion,
   }
 }
