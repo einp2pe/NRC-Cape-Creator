@@ -93,6 +93,10 @@
       textFont?: string
       textBold?: boolean
       textItalic?: boolean
+      // optional separate elytra gradient
+      separateElytraGradient?: boolean
+      elytraGradientColors?: string[] | null
+      elytraGradDirection?: 'vertical' | 'horizontal'
     }
   ): void {
     const ctx = canvas.getContext('2d')
@@ -149,7 +153,9 @@
     const ELYTRA_GRAD_START_Y = 16
     const ELYTRA_GRAD_W = 96   // from 272 to 368
     const ELYTRA_GRAD_H = 160  // from 16 to 176
-    const elytraGradient = this.createGradientAt(ctx, ELYTRA_GRAD_START_X, ELYTRA_GRAD_START_Y, ELYTRA_GRAD_W, ELYTRA_GRAD_H, gradientColors, gradDirection)
+    const elytraColors = options?.separateElytraGradient && options?.elytraGradientColors ? options.elytraGradientColors : gradientColors
+    const elytraDir = options?.separateElytraGradient && options?.elytraGradDirection ? options.elytraGradDirection : gradDirection
+    const elytraGradient = this.createGradientAt(ctx, ELYTRA_GRAD_START_X, ELYTRA_GRAD_START_Y, ELYTRA_GRAD_W, ELYTRA_GRAD_H, elytraColors!, elytraDir)
     ctx.fillStyle = elytraGradient
     ctx.fillRect(ELYTRA_FILL_X, ELYTRA_FILL_Y, ELYTRA_FILL_W, ELYTRA_FILL_H)
 
@@ -162,8 +168,8 @@
       this.ELYTRA_BOTTOM_STRIP_Y,
       this.ELYTRA_BOTTOM_STRIP_W,
       this.ELYTRA_BOTTOM_STRIP_H,
-      gradientColors,
-      gradDirection,
+      elytraColors!,
+      elytraDir,
       this.ELYTRA_H,  // elytra height (where we continue from)
       this.ELYTRA_BOTTOM_STRIP_H  // strip height (continuation length)
     )

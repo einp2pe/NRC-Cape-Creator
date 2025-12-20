@@ -10,6 +10,7 @@ import { useCapeState } from './hooks/useCapeState'
 function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [showTemplates, setShowTemplates] = useState(false)
+  const [templateScope, setTemplateScope] = useState<'both' | 'elytra' | 'main'>('both')
   const [canvasVersion, setCanvasVersion] = useState(0)
   const {
     frontImage,
@@ -22,6 +23,12 @@ function App() {
     setElytraImage,
     setGradientColors,
     setGradDirection,
+    separateElytraGradient,
+    setSeparateElytraGradient,
+    elytraGradientColors,
+    setElytraGradientColors,
+    elytraGradDirection,
+    setElytraGradDirection,
     emojiEnabled,
     emoji,
     emojiSize,
@@ -91,11 +98,14 @@ function App() {
         textFont,
         textBold,
         textItalic,
+        separateElytraGradient,
+        elytraGradientColors,
+        elytraGradDirection,
       }
     )
     // Increment version to trigger 3D preview update
     setCanvasVersion(v => v + 1)
-  }, [frontImage, backImage, elytraImage, gradientColors, gradDirection, emojiEnabled, emoji, emojiSize, emojiSpacing, emojiOpacity, emojiRotation, emojiRandomRotation, emojiJitter, emojiApplyToElytra, emojiSeed, textColor, textStrokeEnabled, textStrokeColor, textStrokeWidth, textFont, textBold, textItalic, renderer])
+  }, [frontImage, backImage, elytraImage, gradientColors, gradDirection, separateElytraGradient, elytraGradientColors, elytraGradDirection, emojiEnabled, emoji, emojiSize, emojiSpacing, emojiOpacity, emojiRotation, emojiRandomRotation, emojiJitter, emojiApplyToElytra, emojiSeed, textColor, textStrokeEnabled, textStrokeColor, textStrokeWidth, textFont, textBold, textItalic, renderer])
 
     // Force redraw when resetVersion changes
     useEffect(() => {
@@ -155,7 +165,8 @@ function App() {
       {/* Template Gallery Modal */}
       {showTemplates && (
         <TemplateGallery 
-          onSelectTemplate={loadTemplate} 
+          scope={templateScope}
+          onSelectTemplate={(t, scope) => { loadTemplate(t, scope); setShowTemplates(false) }} 
           onClose={() => setShowTemplates(false)} 
         />
       )}
@@ -192,7 +203,7 @@ function App() {
             onElytraImageChange={setElytraImage}
             onDownload={handleDownload}
             onReset={handleReset}
-            onShowTemplates={() => setShowTemplates(true)}
+              onShowTemplates={() => { setTemplateScope('both'); setShowTemplates(true) }}
             hasFrontImage={frontImage !== null}
             hasBackImage={backImage !== null}
             hasElytraImage={elytraImage !== null}
@@ -203,6 +214,13 @@ function App() {
             onGradientColorsChange={setGradientColors}
             gradDirection={gradDirection}
             onGradDirectionChange={setGradDirection}
+            separateElytraGradient={separateElytraGradient}
+            setSeparateElytraGradient={setSeparateElytraGradient}
+            elytraGradientColors={elytraGradientColors}
+            setElytraGradientColors={setElytraGradientColors}
+            elytraGradDirection={elytraGradDirection}
+            setElytraGradDirection={setElytraGradDirection}
+            openTemplateGallery={(scope: 'both' | 'elytra' | 'main') => { setTemplateScope(scope); setShowTemplates(true) }}
             emojiEnabled={emojiEnabled}
             emoji={emoji}
             emojiSize={emojiSize}

@@ -38,6 +38,9 @@ export interface CapeTemplate {
   settings: {
     gradientColors: string[]
     gradDirection: 'vertical' | 'horizontal'
+      separateElytraGradient?: boolean
+      elytraGradientColors?: string[] | null
+      elytraGradDirection?: 'vertical' | 'horizontal'
     emojiEnabled: boolean
     emoji: string
     emojiSize: number

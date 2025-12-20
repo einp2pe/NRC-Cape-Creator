@@ -358,6 +358,40 @@
   transition: var(--transition-bounce);
 }
 
+/* Draggable chip states */
+.color-chip.draggable {
+  cursor: grab;
+}
+.color-chip.draggable:active {
+  cursor: grabbing;
+}
+.color-chip.dragging {
+  opacity: 0.5;
+  transform: scale(0.98) rotate(-2deg);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+}
+.color-chip.drag-over {
+  outline: 3px dashed rgba(99,102,241,0.45);
+  border-radius: 8px;
+}
+
+/* Separate Elytra toggle restyle to fit design */
+.separate-elytra {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+.separate-elytra .checkbox-compact {
+  padding: 8px 12px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border: 1px solid rgba(255,255,255,0.04);
+}
+.separate-elytra .checkbox-compact input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+}
+
 .color-chip input[type="color"]:hover {
   border-color: var(--accent-primary);
   transform: scale(1.1) rotate(5deg);

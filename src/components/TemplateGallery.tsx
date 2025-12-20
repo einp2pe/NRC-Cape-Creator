@@ -2,11 +2,13 @@ import { FC } from 'react'
 import { templates, CapeTemplate, categoryInfo, categoryOrder, TemplateCategory } from '../data/templates'
 
 interface TemplateGalleryProps {
-  onSelectTemplate: (template: CapeTemplate) => void
+  // scope indicates which area the gallery will apply to when a template is chosen
+  scope: 'both' | 'elytra' | 'main'
+  onSelectTemplate: (template: CapeTemplate, scope: 'both' | 'elytra' | 'main') => void
   onClose: () => void
 }
 
-const TemplateGallery: FC<TemplateGalleryProps> = ({ onSelectTemplate, onClose }) => {
+const TemplateGallery: FC<TemplateGalleryProps> = ({ scope, onSelectTemplate, onClose }) => {
   // Group templates by category
   const templatesByCategory = categoryOrder.reduce((acc, category) => {
     acc[category] = templates.filter(t => t.category === category)
@@ -42,7 +44,7 @@ const TemplateGallery: FC<TemplateGalleryProps> = ({ onSelectTemplate, onClose }
                       type="button"
                       className="template-card"
                       onClick={() => {
-                        onSelectTemplate(template)
+                        onSelectTemplate(template, scope)
                         onClose()
                       }}
                     >

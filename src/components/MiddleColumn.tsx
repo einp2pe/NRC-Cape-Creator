@@ -6,6 +6,13 @@ interface MiddleColumnProps {
   onGradientColorsChange: (colors: string[]) => void
   gradDirection: 'vertical' | 'horizontal'
   onGradDirectionChange: (direction: 'vertical' | 'horizontal') => void
+  separateElytraGradient: boolean
+  setSeparateElytraGradient: (v: boolean) => void
+  elytraGradientColors: string[] | null
+  setElytraGradientColors: (c: string[] | null) => void
+  elytraGradDirection: 'vertical' | 'horizontal'
+  setElytraGradDirection: (d: 'vertical' | 'horizontal') => void
+  openTemplateGallery: (scope: 'both' | 'elytra' | 'main') => void
   emojiEnabled: boolean
   emoji: string
   emojiSize: number
@@ -49,6 +56,12 @@ const MiddleColumn: FC<MiddleColumnProps> = ({
   onGradientColorsChange,
   gradDirection,
   onGradDirectionChange,
+  separateElytraGradient,
+  setSeparateElytraGradient,
+  elytraGradientColors,
+  setElytraGradientColors,
+  elytraGradDirection,
+  setElytraGradDirection,
   emojiEnabled,
   emoji,
   emojiSize,
@@ -83,7 +96,19 @@ const MiddleColumn: FC<MiddleColumnProps> = ({
   setTextFont,
   setTextBold,
   setTextItalic,
+  openTemplateGallery,
 }) => {
+  // Helper to move color within an array
+  const moveColor = (arr: string[], from: number, to: number) => {
+    if (to < 0 || to >= arr.length) return arr
+    const copy = [...arr]
+    const [item] = copy.splice(from, 1)
+    copy.splice(to, 0, item)
+    return copy
+  }
+  // Drag state
+  const [dragIndex, setDragIndex] = useState<number | null>(null)
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
   const [activeTab, setActiveTab] = useState<TabType>('gradient')
   const [contentWarning, setContentWarning] = useState<string | null>(null)
 
@@ -107,6 +132,32 @@ const MiddleColumn: FC<MiddleColumnProps> = ({
     newColors[index] = color
     onGradientColorsChange(newColors)
   }
+
+  
+  const applyPreset = (colors: string[], dir: 'vertical' | 'horizontal' = 'vertical') => {
+    // Apply preset to main gradient only. Do not auto-enable separate elytra.
+    onGradientColorsChange(colors)
+    onGradDirectionChange(dir)
+  }
+
+  // Elytra gradient handlers
+  const handleAddElyColor = () => {
+    const base = elytraGradientColors ?? gradientColors
+    const next = [...base, '#ffffff']
+    setElytraGradientColors(next)
+  }
+  const handleRemoveElyColor = (index: number) => {
+    if (!elytraGradientColors) return
+    const next = elytraGradientColors.filter((_, i) => i !== index)
+    setElytraGradientColors(next)
+  }
+  const handleElyColorChange = (index: number, color: string) => {
+    if (!elytraGradientColors) return
+    const next = [...elytraGradientColors]
+    next[index] = color
+    setElytraGradientColors(next)
+  }
+  
 
   return (
     <section className="panel panel-middle" aria-label="Style settings">
@@ -137,6 +188,9 @@ const MiddleColumn: FC<MiddleColumnProps> = ({
             {/* Live gradient preview */}
             <div 
               className="gradient-preview"
+              onClick={() => openTemplateGallery('main')}
+              role="button"
+              tabIndex={0}
               style={{
                 background: gradientColors.length === 1 
                   ? gradientColors[0]
@@ -147,17 +201,44 @@ const MiddleColumn: FC<MiddleColumnProps> = ({
             {/* Inline color strip */}
             <div className="color-strip">
               {gradientColors.map((color, index) => (
-                <div key={index} className="color-chip">
-                  <input 
-                    type="color" 
-                    value={color} 
+                <div
+                  key={index}
+                  className={`color-chip draggable ${dragIndex === index ? 'dragging' : ''} ${dragOverIndex === index ? 'drag-over' : ''}`}
+                  draggable
+                  onDragStart={(e) => {
+                    setDragIndex(index)
+                    e.dataTransfer?.setData('text/plain', String(index))
+                    // show move cursor
+                    e.dataTransfer!.effectAllowed = 'move'
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault()
+                    setDragOverIndex(index)
+                    e.dataTransfer!.dropEffect = 'move'
+                  }}
+                  onDragEnd={() => { setDragIndex(null); setDragOverIndex(null) }}
+                  onDrop={(e) => {
+                    e.preventDefault()
+                    const from = Number(e.dataTransfer?.getData('text/plain'))
+                    const to = index
+                    if (!Number.isNaN(from) && from !== to) {
+                      onGradientColorsChange(moveColor(gradientColors, from, to))
+                    }
+                    setDragIndex(null)
+                    setDragOverIndex(null)
+                  }}
+                >
+                  <input
+                    type="color"
+                    value={color}
                     onChange={(e) => handleColorChange(index, e.target.value)}
                     title={`Color ${index + 1}`}
                   />
+                  
                   {gradientColors.length > 1 && (
-                    <button 
-                      type="button" 
-                      className="chip-remove" 
+                    <button
+                      type="button"
+                      className="chip-remove"
                       onClick={() => handleRemoveColor(index)}
                       aria-label={`Remove color ${index + 1}`}
                     >×</button>
@@ -167,16 +248,108 @@ const MiddleColumn: FC<MiddleColumnProps> = ({
               <button type="button" className="color-add" onClick={handleAddColor} aria-label="Add color">+</button>
             </div>
 
+            <div className="separate-elytra">
+              <label className="checkbox-compact">
+                <input type="checkbox" checked={separateElytraGradient} onChange={(e) => {
+                  const on = e.target.checked
+                  setSeparateElytraGradient(on)
+                  if (on && elytraGradientColors == null) {
+                    // initialize elytra gradient with current main gradient
+                    setElytraGradientColors([...gradientColors])
+                  }
+                }} />
+                <span>Separate Elytra Gradient</span>
+              </label>
+            </div>
+
+            {separateElytraGradient && (
+              <div className="elytra-gradient-panel">
+                <div 
+                  className="gradient-preview elytra"
+                  onClick={() => openTemplateGallery('elytra')}
+                  role="button"
+                  tabIndex={0}
+                  style={{
+                    background: (elytraGradientColors && elytraGradientColors.length === 1) 
+                      ? (elytraGradientColors![0])
+                      : `linear-gradient(${elytraGradDirection === 'vertical' ? '180deg' : '90deg'}, ${(elytraGradientColors ?? gradientColors).join(', ')})`
+                  }}
+                />
+                <div className="color-strip">
+                    {(elytraGradientColors ?? gradientColors).map((color, index) => (
+                      <div
+                        key={index}
+                        className={`color-chip draggable ${dragIndex === index ? 'dragging' : ''} ${dragOverIndex === index ? 'drag-over' : ''}`}
+                        draggable
+                        onDragStart={(e) => {
+                          // mark drag from elytra - encode with prefix
+                          setDragIndex(index)
+                          e.dataTransfer?.setData('text/plain', `ely:${index}`)
+                          e.dataTransfer!.effectAllowed = 'move'
+                        }}
+                        onDragOver={(e) => { e.preventDefault(); setDragOverIndex(index); e.dataTransfer!.dropEffect = 'move' }}
+                        onDragEnd={() => { setDragIndex(null); setDragOverIndex(null) }}
+                        onDrop={(e) => {
+                          e.preventDefault()
+                          const payload = e.dataTransfer?.getData('text/plain') || ''
+                          if (payload.startsWith('ely:')) {
+                            const from = Number(payload.split(':')[1])
+                            const to = index
+                            if (!Number.isNaN(from) && from !== to && elytraGradientColors) {
+                              setElytraGradientColors(moveColor(elytraGradientColors, from, to))
+                            }
+                          } else {
+                            // dragging from main to elytra: insert color into elytra gradient
+                            const from = Number(payload)
+                            if (!Number.isNaN(from) && gradientColors[from]) {
+                              const base = elytraGradientColors ?? gradientColors
+                              const copy = [...base]
+                              const [item] = gradientColors.splice(from, 1)
+                              copy.splice(index, 0, item)
+                              setElytraGradientColors(copy)
+                            }
+                          }
+                          setDragIndex(null)
+                          setDragOverIndex(null)
+                        }}
+                      >
+                        <input type="color" value={color} onChange={(e) => handleElyColorChange(index, e.target.value)} />
+                        
+                        {( (elytraGradientColors ?? gradientColors).length > 1) && (
+                          <button type="button" className="chip-remove" onClick={() => handleRemoveElyColor(index)}>×</button>
+                        )}
+                      </div>
+                    ))}
+                  <button type="button" className="color-add" onClick={handleAddElyColor}>+</button>
+                </div>
+                <div className="direction-toggle">
+                  <span className="toggle-label">Elytra Direction</span>
+                  <div className="toggle-buttons">
+                    <button 
+                      type="button"
+                      className={`toggle-btn ${elytraGradDirection === 'vertical' ? 'active' : ''}`}
+                      onClick={() => setElytraGradDirection('vertical')}
+                    >⬇️ Vertical</button>
+                    <button 
+                      type="button"
+                      className={`toggle-btn ${elytraGradDirection === 'horizontal' ? 'active' : ''}`}
+                      onClick={() => setElytraGradDirection('horizontal')}
+                    >➡️ Horizontal</button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Preset gradients */}
             <div className="gradient-presets">
-              <button type="button" className="preset-btn" onClick={() => onGradientColorsChange(['#ff6b6b', '#feca57'])} title="Sunset">🌅</button>
-              <button type="button" className="preset-btn" onClick={() => onGradientColorsChange(['#a8edea', '#fed6e3'])} title="Pastel">🌸</button>
-              <button type="button" className="preset-btn" onClick={() => onGradientColorsChange(['#667eea', '#764ba2'])} title="Purple">💜</button>
-              <button type="button" className="preset-btn" onClick={() => onGradientColorsChange(['#11998e', '#38ef7d'])} title="Green">🌿</button>
-              <button type="button" className="preset-btn" onClick={() => onGradientColorsChange(['#fc4a1a', '#f7b733'])} title="Fire">🔥</button>
-              <button type="button" className="preset-btn" onClick={() => onGradientColorsChange(['#00c6ff', '#0072ff'])} title="Ocean">🌊</button>
-              <button type="button" className="preset-btn" onClick={() => onGradientColorsChange(['#232526', '#414345'])} title="Dark">🌑</button>
-              <button type="button" className="preset-btn" onClick={() => onGradientColorsChange(['#f5f7fa', '#c3cfe2'])} title="Light">☁️</button>
+              <button type="button" className="preset-btn" onClick={() => applyPreset(['#ff6b6b', '#feca57'], 'vertical')} title="Sunset">🌅</button>
+              <button type="button" className="preset-btn" onClick={() => applyPreset(['#a8edea', '#fed6e3'], 'vertical')} title="Pastel">🌸</button>
+              <button type="button" className="preset-btn" onClick={() => applyPreset(['#667eea', '#764ba2'], 'vertical')} title="Purple">💜</button>
+              <button type="button" className="preset-btn" onClick={() => applyPreset(['#11998e', '#38ef7d'], 'vertical')} title="Green">🌿</button>
+              <button type="button" className="preset-btn" onClick={() => applyPreset(['#fc4a1a', '#f7b733'], 'vertical')} title="Fire">🔥</button>
+              <button type="button" className="preset-btn" onClick={() => applyPreset(['#00c6ff', '#0072ff'], 'vertical')} title="Ocean">🌊</button>
+              <button type="button" className="preset-btn" onClick={() => applyPreset(['#232526', '#414345'], 'vertical')} title="Dark">🌑</button>
+              <button type="button" className="preset-btn" onClick={() => applyPreset(['#f5f7fa', '#c3cfe2'], 'vertical')} title="Light">☁️</button>
             </div>
             
             {/* Direction toggle */}
