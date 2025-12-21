@@ -5,88 +5,115 @@
 <h1 align="center">🎮 NRC Cape Creator</h1>
 
 <p align="center">
-  <strong>Create stunning custom Minecraft capes with gradients, emojis, text, and more!</strong>
+  <strong>Create custom Minecraft capes with gradients, emojis, text, templates, and a live 3D preview.</strong>
 </p>
+
+### (Legacy) Gradient & Color Workflow
+- Supports unlimited colors per gradient (add/remove/reorder)
+- Inline color strip with drag-and-drop reordering
+- Separate elytra gradient toggle — apply different gradient to wings
+
 
 <p align="center">
   <a href="#-features">Features</a> •
   <a href="#-getting-started">Getting Started</a> •
+
+### (Legacy) Image Features
+- Smart positioning for front/back/elytra regions
+- Easy removal of individual images and reset behavior
+
   <a href="#-usage">Usage</a>
 </p>
 
 ---
 
+### (Legacy) Overlay / Typography
+- Text or emoji patterns — repeat a string or emoji across the cape texture
+- Extensive font options (system + categorized Google Fonts)
+- Stroke width control, color, bold/italic toggles
+
+
 <div align="center">
 
 ## 🖥️ Demo  
-**🔗 Live Demo:** [NRC Cape Creator](https://einp2pe.github.io/NRC-Cape-Creator/)
+**🔗 Live Demo:** https://einp2pe.github.io/NRC-Cape-Creator/
 
 </div>
 
+### (Legacy) Overlay Controls — detailed
+- Slider controls for Size, Spacing, Opacity, Rotation, Jitter
+- Random Rotation checkbox, per-tile jitter, numeric Seed input for reproducibility
+- Checkbox to include/exclude elytra from overlays
+
+
 ---
+
+
+### Fonts Included
+- System: Sans-serif, Serif, Monospace, Impact, Comic Sans
+- Bold & Impact: Anton, Bebas Neue, Black Ops One, Bungee, Russo One, Oswald, Titan One, Ultra
+- Gaming & Tech: Orbitron, Press Start 2P, VT323, Bangers, Silkscreen
+- Fun & Display: Creepster, Nosifer, Monoton, Righteous, Concert One
+- Handwritten: Lobster, Pacifico, Dancing Script, Caveat, Indie Flower
+- Elegant: Playfair Display, Cinzel, Abril Fatface, Fredoka
 
 ## ✨ Features
 
 ### 🎨 Gradient Designer
-- **Multi-color gradients** – Add unlimited colors to create unique gradients
-- **8 preset gradients** – Sunset, Pastel, Purple, Green, Fire, Ocean, Dark, Light
-- **Direction control** – Vertical or horizontal gradient flow
-- **Live preview** – See changes instantly as you design
+- Multi-color gradients — add and reorder colors freely
+
+- Preset gradients for quick starts (Sunset, Pastel, Purple, Green, Fire, Ocean, Dark, Light)
+- Direction control — vertical or horizontal gradient flow
+- Live 2D canvas preview updates instantly
+
 
 ### 🖼️ Image Upload & Cropping
-- **Three image zones** – Front cape, back cape, and elytra wings
-- **Built-in cropper** – Crop your images to perfect proportions
-- **Smart positioning** – Images are automatically placed in the correct cape regions
-- **Easy removal** – Remove individual images with one click
+- Three image zones: front cape, back cape, and elytra wings
+
+### (Legacy) Content Filter Details
+- Blocks profanity in English and German
+- Detects leetspeak and common obfuscations (e.g. f1ck, sh!t, @$$)
+- Filters hate symbols and obfuscated offensive content
+
+- Built-in cropper modal with free selection or "use full image"
+- Masked elytra rendering for correct shape
 
 ### ✨ Text & Emoji Overlay
-- **Text or emoji patterns** – Tile any text or emoji across your cape
-- **50+ Google Fonts** – Organized in categories:
-  - 🖥️ System fonts
-  - 🔥 Bold & Impact (Anton, Bebas Neue, Black Ops One, Bungee...)
-  - 🎮 Gaming & Tech (Orbitron, Press Start 2P, VT323...)
-  - 🎉 Fun & Display (Creepster, Nosifer, Monoton...)
-  - ✍️ Handwritten (Lobster, Pacifico, Dancing Script...)
-  - 🏛️ Elegant (Playfair Display, Cinzel...)
+- Tile text or emoji across the cape with sizing, spacing, opacity, rotation, jitter and seed
+- Large font list including system fonts and many Google Fonts
+- Stroke (outline), bold and italic styling
 
 ### 🎛️ Advanced Overlay Controls
-| Control | Description |
-|---------|-------------|
-| **Size** | 16px – 128px |
-| **Spacing** | Control distance between tiles |
-| **Opacity** | 0% – 100% transparency |
-| **Rotation** | -180° to +180° angle |
-| **Random Rotation** | Randomize each tile's angle |
-| **Jitter** | Add position randomness |
-| **Seed** | Reproducible random patterns |
-| **Elytra Toggle** | Include/exclude wings |
+- Size: 16px — 128px
+- Spacing: control distance between tiles
+- Opacity: 0% — 100%
+- Rotation: -180° to +180° (optional random rotation)
+- Jitter & Seed: add randomness with reproducible seed
+- Option to apply overlays to elytra separately
 
-### 🎨 Text Styling
-- **Color picker** – Any color for your text
-- **Bold & Italic** – Style toggles
-- **Stroke/Outline** – Customizable stroke color and width (1-10px)
+### 🧭 Templates & Presets
+- Built-in template gallery grouped by category (Pride, Summer, Winter, Gaming, Minecraft, Gradients, Fun)
+- Templates apply gradient and overlay defaults; can be applied to main, elytra, or both
+
+### 🧩 3D Preview & Skin Viewer
+- Live 3D preview powered by skinview3d (Three.js) that syncs with the 2D canvas
+- Load Minecraft skins by username or upload a skin file
+- Toggle elytra rendering in the 3D viewer
 
 ### 🛡️ Content Filter
-Built-in safety system that blocks:
-- ❌ Profanity (English & German)
-- ❌ Leetspeak variations (f1ck, sh!t, @$$...)
-- ❌ Hate symbols and patterns
-- ❌ Obfuscated offensive content
+- Built-in profanity/content filter blocks offensive text (supports common obfuscations)
 
 ### 📱 Responsive Design
-- **Desktop** – Full-featured experience
-- **Tablet** – Optimized layout
-- **Mobile** – Touch-friendly controls
-- **Ultra-wide (21:9)** – Extended layout
-- **Tall phones (19:9)** – Compact mode
-- **iOS Safe Areas** – Notch-aware design
+- Desktop, tablet and mobile-friendly layouts
+- Touch-friendly cropper and controls
+- iOS safe-area aware
 
 ---
 
 ## 🚀 Getting Started
 
 ### Prerequisites
-- [Bun](https://bun.sh/) (recommended) or Node.js 18+
+- Bun (recommended) or Node.js 18+
 
 ### Installation
 
@@ -102,13 +129,20 @@ bun install
 bun run dev
 ```
 
+If you prefer npm/yarn:
+
+```bash
+npm install
+npm run dev
+```
+
 ### Build for Production
 
 ```bash
 bun run build
 ```
 
-The built files will be in the `dist/` folder.
+Built files are placed into `dist/`.
 
 ### Deploy to GitHub Pages
 
@@ -122,13 +156,13 @@ bun run deploy
 
 ### Creating a Cape
 
-1. **Choose a gradient** – Pick a preset or create your own with custom colors
-2. **Upload images** – Add images for front, back, and/or elytra
-3. **Add overlay** – Enable text/emoji and customize the pattern
-4. **Style it** – Adjust colors, fonts, rotation, and effects
-5. **Download** – Click the download button to save your cape as PNG
+1. Choose or create a gradient
+2. Upload images for front/back/elytra and crop if needed
+3. Enable text or emoji overlay and configure size, spacing, rotation and seed
+4. Optionally load a template from the gallery
+5. Download the resulting cape texture as PNG
 
-### Cape Dimensions
+### Canvas / Cape Layout
 
 | Region | Size | Position |
 |--------|------|----------|
@@ -140,17 +174,17 @@ bun run deploy
 
 ---
 
-## 🛠️ Tech Stack
+## 🛠️ Tech Stack & Key Dependencies
 
 | Technology | Purpose |
 |------------|---------|
-| **React 18** | UI Framework |
-| **TypeScript** | Type Safety |
-| **Vite** | Build Tool |
-| **Canvas API** | Cape Rendering |
-| **Google Fonts** | Typography |
-| **bad-words** | Content Filtering |
-| **GitHub Pages** | Hosting |
+| React 18 | UI Framework |
+| TypeScript | Type Safety |
+| Vite | Build Tool |
+| Canvas API | Cape rendering and composition |
+| skinview3d (Three.js) | Live 3D skin/cape preview |
+| bad-words | Content filtering helper |
+| @react-three/fiber, three | 3D dependencies (used by viewer) |
 
 ---
 
@@ -160,20 +194,24 @@ bun run deploy
 NRC-Cape-Creator/
 ├── public/
 │   ├── logo.svg              # App logo
-│   └── nrc_cape_template.png # Cape template
+│   └── nrc_cape_template.png # Cape template image used for masking/preview
 ├── src/
 │   ├── components/
-│   │   ├── LeftColumn.tsx    # Image uploads & actions
-│   │   ├── MiddleColumn.tsx  # Gradient & overlay controls
-│   │   ├── ImageCropper.tsx  # Image cropping modal
-│   │   └── GradientColorInput.tsx
+│   │   ├── LeftColumn.tsx    # Image uploads, templates button, download/reset
+│   │   ├── MiddleColumn.tsx  # Gradient, overlay controls, presets
+│   │   ├── ImageCropper.tsx  # Cropper modal (canvas-based)
+│   │   ├── GradientColorInput.tsx
+│   │   ├── TemplateGallery.tsx # Template browser
+│   │   └── CapePreview3D.tsx  # 3D skin & cape preview (skinview3d)
 │   ├── hooks/
-│   │   └── useCapeState.ts   # Central state management
+│   │   └── useCapeState.ts   # Centralized app state and loaders
+│   ├── data/
+│   │   └── templates.ts      # Built-in templates and categories
 │   ├── utils/
-│   │   ├── CanvasRenderer.ts # Cape drawing logic
-│   │   └── contentFilter.ts  # Profanity filter
+│   │   ├── CanvasRenderer.ts # All cape drawing logic and masking
+│   │   └── contentFilter.ts  # Profanity / content filtering utilities
 │   ├── App.tsx               # Main app component
-│   ├── App.css               # Component styles
+│   ├── main.tsx              # App bootstrap
 │   └── index.css             # Global styles
 └── index.html
 ```
@@ -182,18 +220,17 @@ NRC-Cape-Creator/
 
 ## 🤝 Contributing
 
-Contributions are welcome! Feel free to:
+Contributions welcome — open issues or PRs. Suggested workflow:
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+2. Create a feature branch (`git checkout -b feature/your-feature`)
+3. Commit and push changes
+4. Open a Pull Request
 
 ---
 
 ## 🙏 Credits
 
-- **NRC Community**
-- **Google Fonts**
-- **Minecraft**
+- NRC Community
+- Google Fonts
+- Minecraft
