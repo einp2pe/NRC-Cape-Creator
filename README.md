@@ -36,7 +36,7 @@
 <div align="center">
 
 ## 🖥️ Demo  
-**🔗 Live Demo:** https://einp2pe.github.io/NRC-Cape-Creator/
+**🔗 Live Demo:** [NRC Cape Creator](https://einp2pe.github.io/NRC-Cape-Creator/)
 
 </div>
 
@@ -231,6 +231,6 @@ Contributions welcome — open issues or PRs. Suggested workflow:
 
 ## 🙏 Credits
 
-- NRC Community
+- NoriskClient
 - Google Fonts
 - Minecraft
