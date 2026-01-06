@@ -1,10 +1,13 @@
 import { FC, useState } from 'react'
 import ImageCropper from './ImageCropper'
+import { validateTemplateUrl } from '../utils/templateImporter'
 
 interface LeftColumnProps {
   onFrontImageChange: (img: HTMLImageElement | null) => void
   onBackImageChange: (img: HTMLImageElement | null) => void
   onElytraImageChange: (img: HTMLImageElement | null) => void
+  onImportTemplate: (url: string) => Promise<void>
+  onClearTemplate: () => void
   onDownload: () => void
   onReset: () => void
   onShowTemplates: () => void
@@ -17,6 +20,8 @@ const LeftColumn: FC<LeftColumnProps> = ({
   onFrontImageChange,
   onBackImageChange,
   onElytraImageChange,
+  onImportTemplate,
+  onClearTemplate,
   onDownload,
   onReset,
   onShowTemplates,
@@ -29,6 +34,9 @@ const LeftColumn: FC<LeftColumnProps> = ({
     imageUrl: string
     type: 'front' | 'back' | 'elytra' | null
   }>({ show: false, imageUrl: '', type: null })
+  const [templateUrl, setTemplateUrl] = useState<string>('')
+  const [templateStatus, setTemplateStatus] = useState<'idle' | 'loading' | 'error' | 'success'>('idle')
+  const [templateMessage, setTemplateMessage] = useState<string>('')
 
   const handleFileChange = (file: File | null, type: 'front' | 'back' | 'elytra') => {
     if (!file) return
@@ -65,6 +73,40 @@ const LeftColumn: FC<LeftColumnProps> = ({
     onReset()
   }
 
+  const handleTemplateImport = async () => {
+    if (!templateUrl.trim()) {
+      setTemplateStatus('error')
+      setTemplateMessage('Enter a template URL to import')
+      return
+    }
+
+    try {
+      validateTemplateUrl(templateUrl)
+    } catch (error) {
+      setTemplateStatus('error')
+      setTemplateMessage(error instanceof Error ? error.message : 'Invalid template URL')
+      return
+    }
+
+    try {
+      setTemplateStatus('loading')
+      setTemplateMessage('Loading template…')
+      await onImportTemplate(templateUrl)
+      setTemplateStatus('success')
+      setTemplateMessage('Template loaded from URL')
+    } catch (error) {
+      setTemplateStatus('error')
+      setTemplateMessage(error instanceof Error ? error.message : 'Failed to import template')
+    }
+  }
+
+  const handleClearTemplate = () => {
+    onClearTemplate()
+    setTemplateStatus('idle')
+    setTemplateMessage('')
+    setTemplateUrl('')
+  }
+
   return (
     <aside className="panel panel-left" aria-label="Image uploads and actions">
       {cropperState.show && (
@@ -87,6 +129,35 @@ const LeftColumn: FC<LeftColumnProps> = ({
 
       <section className="panel-section">
         <h2 className="section-title">🖼️ Images</h2>
+        <div className="template-import-card">
+          <label htmlFor="templateUrl" className="template-import-label">Import template via URL</label>
+          <input
+            id="templateUrl"
+            type="url"
+            className="template-import-input"
+            placeholder="https://cdn.norisk.gg/.../cape.png"
+            value={templateUrl}
+            onChange={(e) => setTemplateUrl(e.target.value)}
+            aria-label="Template URL"
+          />
+          {templateMessage && (
+            <p className={`template-import-message ${templateStatus}`} role="status">{templateMessage}</p>
+          )}
+          <div className="template-import-actions">
+            <button
+              type="button"
+              className="btn btn-import"
+              onClick={handleTemplateImport}
+              disabled={templateStatus === 'loading'}
+            >
+              {templateStatus === 'loading' ? 'Loading…' : 'Load Template'}
+            </button>
+            <button type="button" className="btn btn-clear" onClick={handleClearTemplate}>
+              Clear
+            </button>
+          </div>
+          <p className="template-import-hint">Allowed domains: cdn.norisk.gg, Discord CDN (.png only)</p>
+        </div>
         <div className="upload-grid">
           <div className={`upload-slot-wrapper ${hasFrontImage ? 'has-image' : ''}`}>
             <label className="upload-slot" htmlFor="frontInput">
