@@ -114,6 +114,85 @@ const cropSection = async (image: HTMLImageElement, section: { x: number; y: num
   }, section.w, section.h)
 }
 
+const rgbToHex = (r: number, g: number, b: number) => {
+  const toHex = (n: number) => n.toString(16).padStart(2, '0')
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`
+}
+
+const isNearWhite = (r: number, g: number, b: number) => {
+  // Treat very bright colors as white-ish to avoid choosing the template background
+  const threshold = 235
+  return r >= threshold && g >= threshold && b >= threshold
+}
+
+const countDominantColor = (ctx: CanvasRenderingContext2D, w: number, h: number) => {
+  const data = ctx.getImageData(0, 0, w, h).data
+  const counts = new Map<string, number>()
+  // Sample every 2 pixels for performance
+  for (let y = 0; y < h; y += 2) {
+    for (let x = 0; x < w; x += 2) {
+      const idx = (y * w + x) * 4
+      const r = data[idx]
+      const g = data[idx + 1]
+      const b = data[idx + 2]
+      const a = data[idx + 3]
+      if (a < 10) continue // skip transparent
+      if (isNearWhite(r, g, b)) continue // skip near-white
+      const hex = rgbToHex(r, g, b)
+      counts.set(hex, (counts.get(hex) ?? 0) + 1)
+    }
+  }
+  let best: string | null = null
+  let bestCount = 0
+  counts.forEach((cnt, hex) => {
+    if (cnt > bestCount) { bestCount = cnt; best = hex }
+  })
+  return best ?? '#ffffff'
+}
+
+export const computeDominantCapeColor = async (image: HTMLImageElement): Promise<string> => {
+  // Create canvas and analyze front + back sections; prefer front then fallback to back
+  const canvas = document.createElement('canvas')
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return '#ffffff'
+
+  // Try front
+  canvas.width = CAPE_SECTIONS.front.w
+  canvas.height = CAPE_SECTIONS.front.h
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
+  ctx.drawImage(
+    image,
+    CAPE_SECTIONS.front.x,
+    CAPE_SECTIONS.front.y,
+    CAPE_SECTIONS.front.w,
+    CAPE_SECTIONS.front.h,
+    0,
+    0,
+    CAPE_SECTIONS.front.w,
+    CAPE_SECTIONS.front.h
+  )
+  let dominant = countDominantColor(ctx, canvas.width, canvas.height)
+  if (dominant !== '#ffffff') return dominant
+
+  // Fallback to back
+  canvas.width = CAPE_SECTIONS.back.w
+  canvas.height = CAPE_SECTIONS.back.h
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
+  ctx.drawImage(
+    image,
+    CAPE_SECTIONS.back.x,
+    CAPE_SECTIONS.back.y,
+    CAPE_SECTIONS.back.w,
+    CAPE_SECTIONS.back.h,
+    0,
+    0,
+    CAPE_SECTIONS.back.w,
+    CAPE_SECTIONS.back.h
+  )
+  dominant = countDominantColor(ctx, canvas.width, canvas.height)
+  return dominant
+}
+
 export const validateTemplateUrl = (input: string): URL => {
   if (!input.trim()) {
     throw new Error('Template URL is required')
@@ -157,4 +236,3 @@ export const loadRemoteCapeTemplate = async (input: string, signal?: AbortSignal
 
   return { front, back, elytra }
 }
-

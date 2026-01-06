@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 import { CapeTemplate } from '../data/templates'
-import { loadRemoteCapeTemplate } from '../utils/templateImporter'
+import { loadRemoteCapeTemplate, computeDominantCapeColor } from '../utils/templateImporter'
 
 export const useCapeState = () => {
   const [frontImage, setFrontImage] = useState<HTMLImageElement | null>(null)
@@ -104,6 +104,12 @@ export const useCapeState = () => {
     setFrontImage(remoteSections.front)
     setBackImage(remoteSections.back)
     setElytraImage(remoteSections.elytra)
+    // Auto set gradient dominant color to match cape sides
+    try {
+      const dom = await computeDominantCapeColor(remoteSections.front)
+      setGradientColors([dom])
+      setGradDirection('vertical')
+    } catch {}
   }, [])
 
   return {
