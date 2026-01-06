@@ -6,7 +6,6 @@ import MiddleColumn from './components/MiddleColumn'
 import TemplateGallery from './components/TemplateGallery'
 import CapePreview3D from './components/CapePreview3D'
 import { useCapeState } from './hooks/useCapeState'
-import { validateTemplateUrl } from './utils/templateImporter'
 
 function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -66,8 +65,7 @@ function App() {
     setTextItalic,
     reset,
     loadTemplate,
-    resetVersion,
-    importTemplateFromUrl,
+      resetVersion,
   } = useCapeState()
 
   const renderer = CanvasRenderer.getInstance()
@@ -123,27 +121,6 @@ function App() {
       )
       setCanvasVersion(v => v + 1)
     }, [resetVersion])
-
-    useEffect(() => {
-      const controller = new AbortController()
-      const params = new URLSearchParams(window.location.search)
-      const templateParam = params.get('template')
-      if (!templateParam) return
-
-      try {
-        validateTemplateUrl(templateParam)
-      } catch (error) {
-        console.error('Template URL rejected:', error)
-        return
-      }
-
-      importTemplateFromUrl(templateParam, controller.signal).catch((error) => {
-        if (error instanceof DOMException && error.name === 'AbortError') return
-        console.error('Failed to import template from URL param:', error)
-      })
-
-      return () => controller.abort()
-    }, [importTemplateFromUrl])
   // Force initial draw on mount
   useEffect(() => {
     if (!canvasRef.current) return
@@ -224,15 +201,9 @@ function App() {
             onFrontImageChange={setFrontImage}
             onBackImageChange={setBackImage}
             onElytraImageChange={setElytraImage}
-            onImportTemplate={(url) => importTemplateFromUrl(url)}
-            onClearTemplate={() => {
-              setFrontImage(null)
-              setBackImage(null)
-              setElytraImage(null)
-            }}
             onDownload={handleDownload}
             onReset={handleReset}
-            onShowTemplates={() => { setTemplateScope('both'); setShowTemplates(true) }}
+              onShowTemplates={() => { setTemplateScope('both'); setShowTemplates(true) }}
             hasFrontImage={frontImage !== null}
             hasBackImage={backImage !== null}
             hasElytraImage={elytraImage !== null}

@@ -1,11 +1,10 @@
-import { useCallback, useState } from 'react'
+import { useState } from 'react'
 import { CapeTemplate } from '../data/templates'
-import { loadRemoteCapeTemplate, computeDominantCapeColor } from '../utils/templateImporter'
 
 export const useCapeState = () => {
   const [frontImage, setFrontImage] = useState<HTMLImageElement | null>(null)
   const [backImage, setBackImage] = useState<HTMLImageElement | null>(null)
-  const [resetVersion, setResetVersion] = useState<number>(0)
+    const [resetVersion, setResetVersion] = useState<number>(0)
   const [elytraImage, setElytraImage] = useState<HTMLImageElement | null>(null)
   const [gradientColors, setGradientColors] = useState<string[]>(['#ffffff'])
   const [gradDirection, setGradDirection] = useState<'vertical' | 'horizontal'>('vertical')
@@ -56,7 +55,7 @@ export const useCapeState = () => {
     setTextFont('sans-serif')
     setTextBold(false)
     setTextItalic(false)
-    setResetVersion(v => v + 1)
+      setResetVersion(v => v + 1)
   }
 
   const loadTemplate = (template: CapeTemplate, scope: 'both' | 'elytra' | 'main' = 'both') => {
@@ -98,19 +97,6 @@ export const useCapeState = () => {
 
     // Note: Images are preserved when loading a template
   }
-
-  const importTemplateFromUrl = useCallback(async (url: string, signal?: AbortSignal) => {
-    const remoteSections = await loadRemoteCapeTemplate(url, signal)
-    setFrontImage(remoteSections.front)
-    setBackImage(remoteSections.back)
-    setElytraImage(remoteSections.elytra)
-    // Auto set gradient dominant color to match cape sides
-    try {
-      const dom = await computeDominantCapeColor(remoteSections.front)
-      setGradientColors([dom])
-      setGradDirection('vertical')
-    } catch {}
-  }, [])
 
   return {
     frontImage,
@@ -165,7 +151,6 @@ export const useCapeState = () => {
     setTextItalic,
     reset,
     loadTemplate,
-    resetVersion,
-    importTemplateFromUrl,
+      resetVersion,
   }
 }
