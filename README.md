@@ -140,13 +140,6 @@ bun run deploy
 4. Optionally load a template from the gallery
 5. Download the resulting cape texture as PNG
 
-### Importing Templates via URL
-
-- Paste a trusted HTTPS link into the new **Import via URL** input (left panel) to load an external cape PNG.
-- Only whitelisted CDNs are accepted: `https://cdn.norisk.gg/...` and Discord CDN/attachments (`cdn.discordapp.com`, `media.discordapp.net`, `discord.com`, `discordapp.com`, `discordapp.net`).
-- The URL must resolve to a `.png` file. Non-PNGs or disallowed hosts are rejected.
-- Share designs by appending `?template={encodedUrl}` to the app URL—supported URLs are auto-imported on page load.
-
 ### Canvas / Cape Layout
 
 | Region | Size | Position |
