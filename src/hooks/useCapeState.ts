@@ -11,6 +11,7 @@ export const useCapeState = () => {
   const [separateElytraGradient, setSeparateElytraGradient] = useState<boolean>(false)
   const [elytraGradientColors, setElytraGradientColors] = useState<string[] | null>(null)
   const [elytraGradDirection, setElytraGradDirection] = useState<'vertical' | 'horizontal'>('vertical')
+  const [vanillaElytraEnabled, setVanillaElytraEnabled] = useState<boolean>(false)
   const [emojiEnabled, setEmojiEnabled] = useState<boolean>(false)
   const [emoji, setEmoji] = useState<string>('')
   const [emojiSize, setEmojiSize] = useState<number>(48)
@@ -38,6 +39,7 @@ export const useCapeState = () => {
     setSeparateElytraGradient(false)
     setElytraGradientColors(null)
     setElytraGradDirection('vertical')
+    setVanillaElytraEnabled(false)
     setEmojiEnabled(false)
     setEmoji('')
     setEmojiSize(48)
@@ -147,6 +149,8 @@ export const useCapeState = () => {
     setElytraGradientColors,
     elytraGradDirection,
     setElytraGradDirection,
+    vanillaElytraEnabled,
+    setVanillaElytraEnabled,
     setTextBold,
     setTextItalic,
     reset,

@@ -12,6 +12,8 @@ interface MiddleColumnProps {
   setElytraGradientColors: (c: string[] | null) => void
   elytraGradDirection: 'vertical' | 'horizontal'
   setElytraGradDirection: (d: 'vertical' | 'horizontal') => void
+  vanillaElytraEnabled: boolean
+  setVanillaElytraEnabled: (v: boolean) => void
   openTemplateGallery: (scope: 'both' | 'elytra' | 'main') => void
   emojiEnabled: boolean
   emoji: string
@@ -62,6 +64,8 @@ const MiddleColumn: FC<MiddleColumnProps> = ({
   setElytraGradientColors,
   elytraGradDirection,
   setElytraGradDirection,
+  vanillaElytraEnabled,
+  setVanillaElytraEnabled,
   emojiEnabled,
   emoji,
   emojiSize,
@@ -259,6 +263,10 @@ const MiddleColumn: FC<MiddleColumnProps> = ({
                   }
                 }} />
                 <span>Separate Elytra Gradient</span>
+              </label>
+              <label className="checkbox-compact" style={{marginLeft: '10px'}}>
+                <input type="checkbox" checked={vanillaElytraEnabled} onChange={(e) => setVanillaElytraEnabled(e.target.checked)} />
+                <span>Vanilla Elytra</span>
               </label>
             </div>
 

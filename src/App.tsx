@@ -29,6 +29,8 @@ function App() {
     setElytraGradientColors,
     elytraGradDirection,
     setElytraGradDirection,
+    vanillaElytraEnabled,
+    setVanillaElytraEnabled,
     emojiEnabled,
     emoji,
     emojiSize,
@@ -101,11 +103,12 @@ function App() {
         separateElytraGradient,
         elytraGradientColors,
         elytraGradDirection,
+        vanillaElytraEnabled,
       }
     )
     // Increment version to trigger 3D preview update
     setCanvasVersion(v => v + 1)
-  }, [frontImage, backImage, elytraImage, gradientColors, gradDirection, separateElytraGradient, elytraGradientColors, elytraGradDirection, emojiEnabled, emoji, emojiSize, emojiSpacing, emojiOpacity, emojiRotation, emojiRandomRotation, emojiJitter, emojiApplyToElytra, emojiSeed, textColor, textStrokeEnabled, textStrokeColor, textStrokeWidth, textFont, textBold, textItalic, renderer])
+  }, [frontImage, backImage, elytraImage, gradientColors, gradDirection, separateElytraGradient, elytraGradientColors, elytraGradDirection, vanillaElytraEnabled, emojiEnabled, emoji, emojiSize, emojiSpacing, emojiOpacity, emojiRotation, emojiRandomRotation, emojiJitter, emojiApplyToElytra, emojiSeed, textColor, textStrokeEnabled, textStrokeColor, textStrokeWidth, textFont, textBold, textItalic, renderer])
 
     // Force redraw when resetVersion changes
     useEffect(() => {
@@ -220,6 +223,8 @@ function App() {
             setElytraGradientColors={setElytraGradientColors}
             elytraGradDirection={elytraGradDirection}
             setElytraGradDirection={setElytraGradDirection}
+            vanillaElytraEnabled={vanillaElytraEnabled}
+            setVanillaElytraEnabled={setVanillaElytraEnabled}
             openTemplateGallery={(scope: 'both' | 'elytra' | 'main') => { setTemplateScope(scope); setShowTemplates(true) }}
             emojiEnabled={emojiEnabled}
             emoji={emoji}

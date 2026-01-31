@@ -2,6 +2,8 @@
   private static instance: CanvasRenderer | null = null
   private templateImg: HTMLImageElement | null = null
   private templateReady: boolean = false
+  private vanillaElytraImg: HTMLImageElement | null = null
+  private vanillaElytraReady: boolean = false
 
   private readonly FRONT_X = 8
   private readonly FRONT_Y = 8
@@ -66,6 +68,17 @@
       }
       this.templateImg!.src = fallbackLogo
     }
+
+    // Load vanilla elytra overlay
+    this.vanillaElytraImg = new Image()
+    const vanillaElytraPath = `${import.meta.env.BASE_URL}vanillaelytra.png`
+    this.vanillaElytraImg.src = vanillaElytraPath
+    this.vanillaElytraImg.onload = () => {
+      this.vanillaElytraReady = true
+    }
+    this.vanillaElytraImg.onerror = () => {
+      this.vanillaElytraReady = false
+    }
   }
 
   drawCape(
@@ -97,6 +110,7 @@
       separateElytraGradient?: boolean
       elytraGradientColors?: string[] | null
       elytraGradDirection?: 'vertical' | 'horizontal'
+      vanillaElytraEnabled?: boolean
     }
   ): void {
     const ctx = canvas.getContext('2d')
@@ -397,6 +411,12 @@
       elyCtx.drawImage(maskCanvas, 0, 0)
 
       ctx.drawImage(elyCanvas, this.ELYTRA_X, this.ELYTRA_Y)
+    }
+
+    // Draw vanilla elytra overlay if enabled
+    if (options?.vanillaElytraEnabled && this.vanillaElytraReady && this.vanillaElytraImg) {
+      ctx.globalCompositeOperation = 'source-over'
+      ctx.drawImage(this.vanillaElytraImg, 0, 0, canvas.width, canvas.height)
     }
   }
 
