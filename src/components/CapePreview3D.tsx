@@ -26,12 +26,55 @@ const CapePreview3D: React.FC<CapePreview3DProps> = ({ capeCanvas, canvasVersion
     setSkinError(null)
     
     try {
-      const skinUrl = `https://mc-heads.net/skin/${encodeURIComponent(name.trim())}`
+      const trimmedName = name.trim()
+      const profileResponse = await fetch(
+        `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(`https://api.mojang.com/users/profiles/minecraft/${trimmedName}`)}`,
+        { cache: 'no-store' }
+      )
+      if (!profileResponse.ok) {
+        throw new Error('Player not found')
+      }
+
+      const profile = (await profileResponse.json()) as { id?: string; name?: string }
+      if (!profile.id) {
+        throw new Error('Player not found')
+      }
+
+      const sessionResponse = await fetch(
+        `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(`https://sessionserver.mojang.com/session/minecraft/profile/${profile.id}`)}`,
+        { cache: 'no-store' }
+      )
+      if (!sessionResponse.ok) {
+        throw new Error('Skin texture not found')
+      }
+
+      const sessionProfile = (await sessionResponse.json()) as {
+        properties?: Array<{ name: string; value: string }>
+      }
+
+      const texturesProperty = sessionProfile.properties?.find((property) => property.name === 'textures')
+      if (!texturesProperty) {
+        throw new Error('Skin texture not found')
+      }
+
+      const decoded = JSON.parse(atob(texturesProperty.value)) as {
+        textures?: {
+          SKIN?: {
+            url?: string
+          }
+        }
+      }
+
+      const skinUrl = decoded.textures?.SKIN?.url
+      if (!skinUrl) {
+        throw new Error('Skin texture not found')
+      }
+
       await viewerRef.current.loadSkin(skinUrl)
       setSkinError(null)
     } catch (error) {
       console.error('Error loading skin:', error)
-      setSkinError('Player not found')
+      setSkinError('Could not resolve skin')
       viewerRef.current.loadSkin(DEFAULT_SKIN_URL)
     } finally {
       setSkinLoading(false)

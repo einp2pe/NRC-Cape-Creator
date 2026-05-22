@@ -8,6 +8,8 @@ interface ImageCropperProps {
   label: string
 }
 
+type SelectionRect = { x: number; y: number; width: number; height: number }
+
 const ImageCropper: FC<ImageCropperProps> = ({
   imageUrl,
   onCropComplete,
@@ -22,7 +24,7 @@ const ImageCropper: FC<ImageCropperProps> = ({
   const [aspectMode, setAspectMode] = useState(true)
   const [aspectRatio] = useState<number>(2 / 3) // width / height (cape ratio)
   const [aspectBox, setAspectBox] = useState<{ x: number; y: number; width: number; height: number } | null>(null)
-  const [aspectScale, setAspectScale] = useState<number>(0.6) // relative size (0-1) of canvas width/height
+  const [aspectScalePercent, setAspectScalePercent] = useState<number>(60) // 1-100 linear scale of max fit size
   const [isDraggingBox, setIsDraggingBox] = useState(false)
   const dragOffset = useRef<{ x: number; y: number } | null>(null)
 
@@ -41,25 +43,56 @@ const ImageCropper: FC<ImageCropperProps> = ({
   }, [imageUrl])
 
   const initAspectBox = (canvas: HTMLCanvasElement) => {
-    updateAspectBoxForScale(canvas, aspectScale)
+    updateAspectBoxForScale(canvas, aspectScalePercent, false)
   }
 
-  const updateAspectBoxForScale = (canvas: HTMLCanvasElement, scale: number) => {
+  const updateAspectBoxForScale = (canvas: HTMLCanvasElement, scalePercent: number, keepCenter = true) => {
     const ratio = aspectRatio
-    // attempt using percentage of canvas width
-    let width = Math.min(canvas.width * scale, canvas.width)
-    let height = width / ratio
-    // if height doesn't fit, scale relative to canvas height instead
-    if (height > canvas.height) {
-      height = Math.min(canvas.height * scale, canvas.height)
-      width = height * ratio
-    }
-    // clamp
-    width = Math.max(10, Math.min(width, canvas.width))
-    height = Math.max(10, Math.min(height, canvas.height))
-    const x = (canvas.width - width) / 2
-    const y = (canvas.height - height) / 2
+    const clampedScale = Math.max(1, Math.min(100, scalePercent))
+
+    // Compute max size that always fits; scale linearly from small to max.
+    const maxWidth = Math.min(canvas.width, canvas.height * ratio)
+    const minWidth = Math.max(10, maxWidth * 0.05)
+    const width = minWidth + (maxWidth - minWidth) * (clampedScale / 100)
+    const height = width / ratio
+
+    // Keep current box center when resizing to make interaction stable.
+    const centerX = keepCenter && aspectBox ? aspectBox.x + aspectBox.width / 2 : canvas.width / 2
+    const centerY = keepCenter && aspectBox ? aspectBox.y + aspectBox.height / 2 : canvas.height / 2
+
+    const x = Math.max(0, Math.min(centerX - width / 2, canvas.width - width))
+    const y = Math.max(0, Math.min(centerY - height / 2, canvas.height - height))
     setAspectBox({ x, y, width, height })
+  }
+
+  const getActiveSelectionRect = (): SelectionRect | null => {
+    if (aspectMode && aspectBox) return aspectBox
+    if (!aspectMode && startPos && endPos) {
+      const minX = Math.min(startPos.x, endPos.x)
+      const minY = Math.min(startPos.y, endPos.y)
+      const maxX = Math.max(startPos.x, endPos.x)
+      const maxY = Math.max(startPos.y, endPos.y)
+      return {
+        x: minX,
+        y: minY,
+        width: maxX - minX,
+        height: maxY - minY,
+      }
+    }
+    return null
+  }
+
+  const getSelectionOverlayStyle = (): React.CSSProperties | undefined => {
+    const canvas = canvasRef.current
+    const selection = getActiveSelectionRect()
+    if (!canvas || !selection || selection.width <= 0 || selection.height <= 0) return undefined
+
+    return {
+      left: `${(selection.x / canvas.width) * 100}%`,
+      top: `${(selection.y / canvas.height) * 100}%`,
+      width: `${(selection.width / canvas.width) * 100}%`,
+      height: `${(selection.height / canvas.height) * 100}%`,
+    }
   }
 
   const drawImage = () => {
@@ -74,46 +107,6 @@ const ImageCropper: FC<ImageCropperProps> = ({
     if (!ctx) return
 
     ctx.drawImage(image, 0, 0)
-    // Draw selection rectangle if exists (free-draw)
-    if (!aspectMode && startPos && endPos) {
-      const minX = Math.min(startPos.x, endPos.x)
-      const minY = Math.min(startPos.y, endPos.y)
-      const maxX = Math.max(startPos.x, endPos.x)
-      const maxY = Math.max(startPos.y, endPos.y)
-      const width = maxX - minX
-      const height = maxY - minY
-
-      // Semi-transparent overlay outside selection
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'
-      ctx.fillRect(0, 0, canvas.width, canvas.height)
-
-      // Clear selection area
-      ctx.clearRect(minX, minY, width, height)
-      ctx.drawImage(image, minX, minY, width, height, minX, minY, width, height)
-
-      // Draw selection border
-      ctx.strokeStyle = 'rgba(99, 102, 241, 1)'
-      ctx.lineWidth = 3
-      ctx.strokeRect(minX, minY, width, height)
-    }
-
-    // Draw fixed-aspect selection box if enabled
-    if (aspectMode && aspectBox) {
-      const { x, y, width, height } = aspectBox
-
-      // Semi-transparent overlay outside selection
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)'
-      ctx.fillRect(0, 0, canvas.width, canvas.height)
-
-      // Clear selection area
-      ctx.clearRect(x, y, width, height)
-      ctx.drawImage(image, x, y, width, height, x, y, width, height)
-
-      // Draw selection border
-      ctx.strokeStyle = 'rgba(99, 102, 241, 1)'
-      ctx.lineWidth = 3
-      ctx.strokeRect(x, y, width, height)
-    }
   }
 
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -175,7 +168,7 @@ const ImageCropper: FC<ImageCropperProps> = ({
 
   useEffect(() => {
     drawImage()
-  }, [aspectMode, aspectBox])
+  }, [aspectMode, aspectBox, aspectScalePercent])
 
   const handleCrop = () => {
     const canvas = canvasRef.current
@@ -225,15 +218,20 @@ const ImageCropper: FC<ImageCropperProps> = ({
         <h3>🎬 Crop {label}</h3>
         <p>Drag to select area to crop</p>
 
-        <canvas
-          ref={canvasRef}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
-          className="cropper-canvas"
-          style={{ maxWidth: '100%', maxHeight: '60vh', cursor: 'crosshair' }}
-        />
+        <div className="cropper-stage">
+          <canvas
+            ref={canvasRef}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            className="cropper-canvas"
+            style={{ maxWidth: '100%', maxHeight: '60vh', cursor: aspectMode && isDraggingBox ? 'grabbing' : 'crosshair' }}
+          />
+          {getSelectionOverlayStyle() && (
+            <div className="cropper-selection" style={getSelectionOverlayStyle()} />
+          )}
+        </div>
 
         <div className="cropper-controls">
           <button
@@ -257,19 +255,19 @@ const ImageCropper: FC<ImageCropperProps> = ({
                 aria-label="aspect-size"
                 className="zoom-range"
                 type="range"
-                min={0.1}
-                max={1}
-                step={0.01}
-                value={aspectScale}
+                min={1}
+                max={100}
+                step={1}
+                value={aspectScalePercent}
                 onChange={(ev) => {
                   const v = Number(ev.currentTarget.value)
-                  setAspectScale(v)
+                  setAspectScalePercent(v)
                   const canvas = canvasRef.current
                   if (!canvas) return
                   updateAspectBoxForScale(canvas, v)
                 }}
               />
-              <span className="size-percent">{Math.round(aspectScale * 100)}%</span>
+              <span className="size-percent">{aspectScalePercent}%</span>
             </>
           )}
         </div>

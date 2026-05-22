@@ -41,28 +41,14 @@ export interface CapeTemplate {
       separateElytraGradient?: boolean
       elytraGradientColors?: string[] | null
       elytraGradDirection?: 'vertical' | 'horizontal'
-    emojiEnabled: boolean
-    emoji: string
-    emojiSize: number
-    emojiSpacing: number
-    emojiOpacity: number
-    emojiRotation: number
-    emojiRandomRotation: boolean
-    emojiJitter: number
-    emojiApplyToElytra: boolean
-    emojiSeed: number
-    textColor: string
-    textStrokeEnabled: boolean
-    textStrokeColor: string
-    textStrokeWidth: number
-    textFont: string
-    textBold: boolean
-    textItalic: boolean
+    // Other legacy/template fields (emoji/text) may exist in data; allow them but they are ignored by the app
+    [key: string]: any
   }
 }
 
 // Default settings template for reuse
-const defaultSettings = {
+const defaultSettings: Record<string, any> = {
+  // Keep legacy values here for data completeness; the app ignores text/emoji settings
   emojiEnabled: false,
   emoji: '',
   emojiSize: 48,

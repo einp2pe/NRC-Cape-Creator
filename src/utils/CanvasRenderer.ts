@@ -2,8 +2,8 @@
   private static instance: CanvasRenderer | null = null
   private templateImg: HTMLImageElement | null = null
   private templateReady: boolean = false
-  private vanillaElytraImg: HTMLImageElement | null = null
-  private vanillaElytraReady: boolean = false
+  private templateReadyListeners: Array<() => void> = []
+  // vanilla elytra removed
 
   private readonly FRONT_X = 8
   private readonly FRONT_Y = 8
@@ -36,8 +36,7 @@
   private readonly ELYTRA_BOTTOM_STRIP_W = 48
   private readonly ELYTRA_BOTTOM_STRIP_H = 8
   // Where it actually renders (continuation area)
-  private readonly ELYTRA_CONTINUATION_X = 320
-  private readonly ELYTRA_CONTINUATION_Y = 176
+  // continuation coords removed (unused)
 
   private constructor() {
     this.initTemplate()
@@ -50,6 +49,24 @@
     return CanvasRenderer.instance
   }
 
+  onTemplateReady(listener: () => void): () => void {
+    if (this.templateReady) {
+      listener()
+      return () => {}
+    }
+    this.templateReadyListeners.push(listener)
+    return () => {
+      this.templateReadyListeners = this.templateReadyListeners.filter((l) => l !== listener)
+    }
+  }
+
+  private notifyTemplateReady(): void {
+    if (this.templateReadyListeners.length === 0) return
+    const listeners = [...this.templateReadyListeners]
+    this.templateReadyListeners = []
+    listeners.forEach((listener) => listener())
+  }
+
   private initTemplate(): void {
     this.templateImg = new Image()
     // Try loading the template from the public folder using Vite base URL
@@ -59,26 +76,19 @@
     this.templateImg.src = templatePath
     this.templateImg.onload = () => {
       this.templateReady = true
+      this.notifyTemplateReady()
     }
     // If the PNG is not found, try falling back to the project logo (SVG)
     this.templateImg.onerror = () => {
       // attempt fallback
       this.templateImg!.onerror = () => {
         this.templateReady = false
+        this.notifyTemplateReady()
       }
       this.templateImg!.src = fallbackLogo
     }
 
-    // Load vanilla elytra overlay
-    this.vanillaElytraImg = new Image()
-    const vanillaElytraPath = `${import.meta.env.BASE_URL}vanillaelytra.png`
-    this.vanillaElytraImg.src = vanillaElytraPath
-    this.vanillaElytraImg.onload = () => {
-      this.vanillaElytraReady = true
-    }
-    this.vanillaElytraImg.onerror = () => {
-      this.vanillaElytraReady = false
-    }
+    // vanilla elytra asset removed — overlay no longer used
   }
 
   drawCape(
@@ -89,40 +99,34 @@
     gradientColors: string[],
     gradDirection: 'vertical' | 'horizontal',
     options?: {
-      emojiEnabled?: boolean
-      emoji?: string
-      emojiSize?: number
-      emojiSpacing?: number
-      emojiOpacity?: number
-      emojiRotation?: number
-      emojiRandomRotation?: boolean
-      emojiJitter?: number
-      emojiApplyToElytra?: boolean
-      emojiSeed?: number
-      textColor?: string
-      textStrokeEnabled?: boolean
-      textStrokeColor?: string
-      textStrokeWidth?: number
-      textFont?: string
-      textBold?: boolean
-      textItalic?: boolean
       // optional separate elytra gradient
       separateElytraGradient?: boolean
       elytraGradientColors?: string[] | null
       elytraGradDirection?: 'vertical' | 'horizontal'
-      vanillaElytraEnabled?: boolean
+      // vanillaElytraEnabled removed
     }
   ): void {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
+    // Base template dimensions used by the renderer.
+    // The template image is 512x256 and all coordinates below are defined in that space.
+    const BASE_WIDTH = 512
+    const BASE_HEIGHT = 256
+
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-    // Draw template base if ready
+    // Scale drawing operations so template coordinates map to current canvas size
+    const scaleX = canvas.width / BASE_WIDTH
+    const scaleY = canvas.height / BASE_HEIGHT
+    ctx.save()
+    ctx.scale(scaleX, scaleY)
+
+    // Draw template base if ready (coordinates are in base units)
     if (this.templateReady && this.templateImg) {
       ctx.globalCompositeOperation = 'source-over'
-      ctx.drawImage(this.templateImg, 0, 0)
+      ctx.drawImage(this.templateImg, 0, 0, BASE_WIDTH, BASE_HEIGHT)
     } else {
       ctx.globalCompositeOperation = 'source-over'
     }
@@ -137,7 +141,8 @@
     const CAPE_GRAD_W = 168  // from 8 to 176
     const CAPE_GRAD_H = 128  // from 8 to 136
     const capeGradient = this.createGradientAt(ctx, CAPE_GRAD_START_X, CAPE_GRAD_START_Y, CAPE_GRAD_W, CAPE_GRAD_H, gradientColors, gradDirection)
-    ctx.globalCompositeOperation = 'source-atop'
+    // Before template is ready, render directly so a white cape appears immediately.
+    ctx.globalCompositeOperation = this.templateReady && this.templateImg ? 'source-atop' : 'source-over'
     ctx.fillStyle = capeGradient
     ctx.fillRect(CAPE_FILL_X, CAPE_FILL_Y, CAPE_FILL_W, CAPE_FILL_H)
 
@@ -190,185 +195,7 @@
     ctx.fillStyle = elytraBottomStripGradient
     ctx.fillRect(this.ELYTRA_BOTTOM_STRIP_X, this.ELYTRA_BOTTOM_STRIP_Y, this.ELYTRA_BOTTOM_STRIP_W, this.ELYTRA_BOTTOM_STRIP_H)
 
-    // Draw emoji tiled pattern above the color but below user images
-    if (options?.emojiEnabled && options?.emoji) {
-      const emoji = options.emoji
-      const size = options.emojiSize || 48
-      const spacing = options.emojiSpacing || 64
-      const opacity = typeof options.emojiOpacity === 'number' ? options.emojiOpacity : 1
-      const baseRotation = options.emojiRotation || 0
-      const randomRotation = !!options.emojiRandomRotation
-      const jitter = options.emojiJitter || 0
-      const applyToElytra = options.emojiApplyToElytra !== false
-      const seed = options.emojiSeed || 0
-
-      // Text style options
-      const textColor = options.textColor || '#ffffff'
-      const textStrokeEnabled = !!options.textStrokeEnabled
-      const textStrokeColor = options.textStrokeColor || '#000000'
-      const textStrokeWidth = options.textStrokeWidth || 2
-      const textFont = options.textFont || 'sans-serif'
-      const textBold = !!options.textBold
-      const textItalic = !!options.textItalic
-
-      ctx.save()
-      ctx.globalAlpha = opacity
-
-      // Create clipping region that excludes the strip areas (88,0 to 167,7) and (272,0 to 319,7) and (176,88 to 183,175)
-      ctx.beginPath()
-      // Draw the entire canvas area
-      ctx.rect(0, 0, canvas.width, canvas.height)
-      // Cut out excluded strip 1: 88,0 to 168,8
-      ctx.rect(88, 0, 80, 8)
-      // Cut out excluded strip 2: 272,0 to 320,8
-      ctx.rect(272, 0, 48, 8)
-      // Cut out excluded area 3: 176,88 to 183,175 (8x88)
-      ctx.rect(176, 88, 8, 88)
-      ctx.clip('evenodd')
-
-      // Build font string
-      let fontStyle = ''
-      if (textItalic) fontStyle += 'italic '
-      if (textBold) fontStyle += 'bold '
-      fontStyle += `${size}px `
-      // Use emoji fonts for pure emoji (single emoji character), otherwise use selected font
-      // Improved emoji detection: check if it's a single grapheme that is an emoji
-      const emojiRegex = /^(\p{Emoji_Presentation}|\p{Emoji}\uFE0F)(\u200D(\p{Emoji_Presentation}|\p{Emoji}\uFE0F))*$/u
-      const isEmoji = emojiRegex.test(emoji) && [...emoji].length <= 7 // ZWJ sequences can be long
-      if (isEmoji) {
-        fontStyle += '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif'
-      } else {
-        fontStyle += `"${textFont}", sans-serif`
-      }
-      ctx.font = fontStyle
-      ctx.textAlign = 'center'
-      ctx.textBaseline = 'middle'
-      ctx.fillStyle = textColor
-      if (textStrokeEnabled) {
-        ctx.strokeStyle = textStrokeColor
-        ctx.lineWidth = textStrokeWidth
-      }
-
-      const rand = (x: number, y: number) => {
-        // deterministic pseudo-random based on coordinates and seed
-        const s = Math.sin(x * 12.9898 + y * 78.233 + seed) * 43758.5453
-        return s - Math.floor(s)
-      }
-
-      // Map "below front" coordinates to bottom strip coordinates
-      // Below front: Y=136-143 (continuation) -> Bottom strip: 88,0 to 167,7
-      // X stays same relative position, Y maps 136-143 to 0-7
-      const mapBelowFrontToBottomStrip = (belowX: number, belowY: number) => {
-        const relX = belowX - this.FRONT_X  // 0-79 (same X as front)
-        const relY = belowY - (this.FRONT_Y + this.FRONT_H)  // 0-7 (Y below front)
-        const stripX = this.BOTTOM_STRIP_X + relX  // 88-167
-        const stripY = this.BOTTOM_STRIP_Y + relY  // 0-7
-        return { x: stripX, y: stripY }
-      }
-
-      // Map "below elytra" coordinates to elytra bottom strip coordinates
-      // Below elytra: 320,176 to 367,183 -> Elytra bottom strip: 272,0 to 319,7
-      const mapBelowElytraToBottomStrip = (belowX: number, belowY: number) => {
-        const relX = belowX - this.ELYTRA_CONTINUATION_X  // 0-47
-        const relY = belowY - this.ELYTRA_CONTINUATION_Y  // 0-7
-        const stripX = this.ELYTRA_BOTTOM_STRIP_X + relX  // 272-319
-        const stripY = this.ELYTRA_BOTTOM_STRIP_Y + relY  // 0-7
-        return { x: stripX, y: stripY }
-      }
-
-      // Emoji covers entire gradient area (cape + elytra = 0,0 to 368,176)
-      const EMOJI_AREA_W = 368
-      const EMOJI_AREA_H = 176
-
-      for (let y = 0; y < EMOJI_AREA_H + spacing; y += spacing) {
-        const rowIndex = Math.floor(y / spacing)
-        const offset = (rowIndex % 2 === 0) ? 0 : spacing / 2
-        for (let x = -spacing; x < EMOJI_AREA_W + spacing; x += spacing) {
-          let px = x + offset + spacing / 2
-          let py = y + spacing / 2
-
-          // apply jitter
-          if (jitter > 0) {
-            const r = rand(px + 0.1, py + 0.2)
-            const j = (r * 2 - 1) * jitter * spacing
-            px += j
-            py += (rand(px + 0.3, py + 0.4) * 2 - 1) * jitter * spacing
-          }
-
-          // Skip if not applying to elytra and the point intersects elytra region
-          if (!applyToElytra) {
-            if (
-              px >= this.ELYTRA_X && px <= this.ELYTRA_X + this.ELYTRA_W &&
-              py >= this.ELYTRA_Y && py <= this.ELYTRA_Y + this.ELYTRA_H
-            ) {
-              continue
-            }
-          }
-
-          // rotation
-          let angleDeg = baseRotation
-          if (randomRotation) {
-            angleDeg = (rand(px + 0.5, py + 0.6) * 360) - 180
-          }
-          const angle = (angleDeg * Math.PI) / 180
-
-          ctx.save()
-          ctx.translate(px, py)
-          if (angle !== 0) ctx.rotate(angle)
-          if (textStrokeEnabled) {
-            ctx.strokeText(emoji as string, 0, 0)
-          }
-          ctx.fillText(emoji as string, 0, 0)
-          ctx.restore()
-
-          // Also draw in bottom strip if this emoji is in the "below front" area
-          // Below front: X=8-87, Y=136-143 (continuation of front)
-          const belowFrontStartY = this.FRONT_Y + this.FRONT_H  // 136
-          const belowFrontEndY = belowFrontStartY + this.BOTTOM_STRIP_H  // 144
-          const isInBelowFrontArea = px >= this.FRONT_X && px <= this.FRONT_X + this.FRONT_W &&
-                                     py >= belowFrontStartY && py < belowFrontEndY
-          if (isInBelowFrontArea) {
-            const mapped = mapBelowFrontToBottomStrip(px, py)
-
-            ctx.save()
-            ctx.translate(mapped.x, mapped.y)
-            if (angle !== 0) ctx.rotate(angle)
-            if (textStrokeEnabled) {
-              ctx.strokeText(emoji as string, 0, 0)
-            }
-            ctx.fillText(emoji as string, 0, 0)
-            ctx.restore()
-          }
-
-          // Also draw in elytra bottom strip if this emoji is in the "below elytra" area
-          // Below elytra: X=320-367, Y=176-183 (continuation of elytra)
-          const isInBelowElytraArea = px >= this.ELYTRA_CONTINUATION_X && 
-                                      px < this.ELYTRA_CONTINUATION_X + this.ELYTRA_BOTTOM_STRIP_W &&
-                                      py >= this.ELYTRA_CONTINUATION_Y && 
-                                      py < this.ELYTRA_CONTINUATION_Y + this.ELYTRA_BOTTOM_STRIP_H
-          if (isInBelowElytraArea) {
-            const mapped = mapBelowElytraToBottomStrip(px, py)
-
-            ctx.save()
-            ctx.translate(mapped.x, mapped.y)
-            if (angle !== 0) ctx.rotate(angle)
-            if (textStrokeEnabled) {
-              ctx.strokeText(emoji as string, 0, 0)
-            }
-            ctx.fillText(emoji as string, 0, 0)
-            ctx.restore()
-          }
-        }
-      }
-
-      ctx.restore()
-    }
-
-    // Draw template on top
-    if (this.templateReady && this.templateImg) {
-      ctx.globalCompositeOperation = 'destination-over'
-      ctx.drawImage(this.templateImg, 0, 0)
-    }
+    // emoji/text rendering removed
 
     ctx.globalCompositeOperation = 'source-over'
 
@@ -412,12 +239,10 @@
 
       ctx.drawImage(elyCanvas, this.ELYTRA_X, this.ELYTRA_Y)
     }
+    // vanilla elytra overlay removed
 
-    // Draw vanilla elytra overlay if enabled
-    if (options?.vanillaElytraEnabled && this.vanillaElytraReady && this.vanillaElytraImg) {
-      ctx.globalCompositeOperation = 'source-over'
-      ctx.drawImage(this.vanillaElytraImg, 0, 0, canvas.width, canvas.height)
-    }
+    // restore transform to pixel canvas coordinates
+    ctx.restore()
   }
 
   private createGradientAt(

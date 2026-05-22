@@ -9,9 +9,16 @@ import { useCapeState } from './hooks/useCapeState'
 
 function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const previewCapeCanvasRef = useRef<HTMLCanvasElement | null>(null)
+  const storageNoticeKey = 'nrc-cape-creator-storage-notice-dismissed'
   const [showTemplates, setShowTemplates] = useState(false)
   const [templateScope, setTemplateScope] = useState<'both' | 'elytra' | 'main'>('both')
   const [canvasVersion, setCanvasVersion] = useState(0)
+  const [templateReadyTick, setTemplateReadyTick] = useState(0)
+  const [showStorageNotice, setShowStorageNotice] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return window.localStorage.getItem(storageNoticeKey) !== 'dismissed'
+  })
   const {
     frontImage,
     backImage,
@@ -29,48 +36,40 @@ function App() {
     setElytraGradientColors,
     elytraGradDirection,
     setElytraGradDirection,
-    vanillaElytraEnabled,
-    setVanillaElytraEnabled,
-    emojiEnabled,
-    emoji,
-    emojiSize,
-    emojiSpacing,
-    setEmojiEnabled,
-    setEmoji,
-    setEmojiSize,
-    setEmojiSpacing,
-    emojiOpacity,
-    emojiRotation,
-    emojiRandomRotation,
-    emojiJitter,
-    emojiApplyToElytra,
-    emojiSeed,
-    setEmojiOpacity,
-    setEmojiRotation,
-    setEmojiRandomRotation,
-    setEmojiJitter,
-    setEmojiApplyToElytra,
-    setEmojiSeed,
-    textColor,
-    textStrokeEnabled,
-    textStrokeColor,
-    textStrokeWidth,
-    textFont,
-    textBold,
-    textItalic,
-    setTextColor,
-    setTextStrokeEnabled,
-    setTextStrokeColor,
-    setTextStrokeWidth,
-    setTextFont,
-    setTextBold,
-    setTextItalic,
+    // vanilla elytra removed
+    // emoji/text removed
     reset,
     loadTemplate,
       resetVersion,
   } = useCapeState()
 
   const renderer = CanvasRenderer.getInstance()
+
+  const updatePreviewCapeCanvas = () => {
+    const sourceCanvas = canvasRef.current
+    if (!sourceCanvas) return
+
+    const previewCanvas = previewCapeCanvasRef.current ?? document.createElement('canvas')
+    previewCanvas.width = sourceCanvas.width
+    previewCanvas.height = sourceCanvas.height
+
+    const ctx = previewCanvas.getContext('2d')
+    if (!ctx) return
+
+    ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height)
+    // Keep the live preview at the same resolution as the editor texture.
+    ctx.imageSmoothingEnabled = false
+    ctx.drawImage(sourceCanvas, 0, 0)
+    previewCapeCanvasRef.current = previewCanvas
+  }
+
+  // Redraw immediately when the template image finishes loading.
+  useEffect(() => {
+    const unsubscribe = renderer.onTemplateReady(() => {
+      setTemplateReadyTick((v) => v + 1)
+    })
+    return unsubscribe
+  }, [renderer])
 
   // Draw cape when state changes
   useEffect(() => {
@@ -83,32 +82,15 @@ function App() {
       gradientColors,
       gradDirection,
       {
-        emojiEnabled,
-        emoji,
-        emojiSize,
-        emojiSpacing,
-        emojiOpacity,
-        emojiRotation,
-        emojiRandomRotation,
-        emojiJitter,
-        emojiApplyToElytra,
-        emojiSeed,
-        textColor,
-        textStrokeEnabled,
-        textStrokeColor,
-        textStrokeWidth,
-        textFont,
-        textBold,
-        textItalic,
         separateElytraGradient,
         elytraGradientColors,
         elytraGradDirection,
-        vanillaElytraEnabled,
       }
     )
+    updatePreviewCapeCanvas()
     // Increment version to trigger 3D preview update
     setCanvasVersion(v => v + 1)
-  }, [frontImage, backImage, elytraImage, gradientColors, gradDirection, separateElytraGradient, elytraGradientColors, elytraGradDirection, vanillaElytraEnabled, emojiEnabled, emoji, emojiSize, emojiSpacing, emojiOpacity, emojiRotation, emojiRandomRotation, emojiJitter, emojiApplyToElytra, emojiSeed, textColor, textStrokeEnabled, textStrokeColor, textStrokeWidth, textFont, textBold, textItalic, renderer])
+  }, [frontImage, backImage, elytraImage, gradientColors, gradDirection, separateElytraGradient, elytraGradientColors, elytraGradDirection, templateReadyTick, renderer])
 
     // Force redraw when resetVersion changes
     useEffect(() => {
@@ -122,6 +104,7 @@ function App() {
         'vertical',
         {}
       )
+      updatePreviewCapeCanvas()
       setCanvasVersion(v => v + 1)
     }, [resetVersion])
   // Force initial draw on mount
@@ -138,6 +121,7 @@ function App() {
       'vertical',
       {}
     )
+    updatePreviewCapeCanvas()
     
     // Trigger 3D preview updates with delays to ensure it syncs
     const timer1 = setTimeout(() => setCanvasVersion(v => v + 1), 100)
@@ -163,8 +147,29 @@ function App() {
     reset()
   }
 
+  const dismissStorageNotice = () => {
+    setShowStorageNotice(false)
+    try {
+      window.localStorage.setItem(storageNoticeKey, 'dismissed')
+    } catch {
+      // ignore storage errors
+    }
+  }
+
   return (
-    <div className="app">
+    <div className="app ui-pixel">
+      {showStorageNotice && (
+        <div className="storage-notice" role="status" aria-live="polite">
+          <div className="storage-notice__text">
+            <strong>Local save notice</strong>
+            <span> Cape settings and skin cache are stored in your browser only. No analytics cookies are used.</span>
+          </div>
+          <button type="button" className="storage-notice__button" onClick={dismissStorageNotice}>
+            Got it
+          </button>
+        </div>
+      )}
+
       {/* Template Gallery Modal */}
       {showTemplates && (
         <TemplateGallery 
@@ -182,18 +187,20 @@ function App() {
         {/* Preview section with 2D canvas and 3D viewer */}
         <div className="preview-section">
           <figure className="preview-panel">
-            <canvas
-              ref={canvasRef}
-              id="capeCanvas"
-              width={512}
-              height={256}
-              className="cape-canvas"
-              aria-label="Cape texture preview"
-            />
+            <div className="preview-canvas-wrapper">
+              <canvas
+                ref={canvasRef}
+                id="capeCanvas"
+                width={2048}
+                height={1024}
+                className="cape-canvas"
+                aria-label="Cape texture preview"
+              />
+            </div>
             <figcaption className="preview-label">Texture Layout</figcaption>
           </figure>
           <CapePreview3D 
-            capeCanvas={canvasRef.current} 
+            capeCanvas={previewCapeCanvasRef.current} 
             canvasVersion={canvasVersion}
           />
         </div>
@@ -223,43 +230,9 @@ function App() {
             setElytraGradientColors={setElytraGradientColors}
             elytraGradDirection={elytraGradDirection}
             setElytraGradDirection={setElytraGradDirection}
-            vanillaElytraEnabled={vanillaElytraEnabled}
-            setVanillaElytraEnabled={setVanillaElytraEnabled}
+            // vanilla elytra props removed
             openTemplateGallery={(scope: 'both' | 'elytra' | 'main') => { setTemplateScope(scope); setShowTemplates(true) }}
-            emojiEnabled={emojiEnabled}
-            emoji={emoji}
-            emojiSize={emojiSize}
-            emojiSpacing={emojiSpacing}
-            setEmojiEnabled={setEmojiEnabled}
-            setEmoji={setEmoji}
-            setEmojiSize={setEmojiSize}
-            setEmojiSpacing={setEmojiSpacing}
-            emojiOpacity={emojiOpacity}
-            emojiRotation={emojiRotation}
-            emojiRandomRotation={emojiRandomRotation}
-            emojiJitter={emojiJitter}
-            emojiApplyToElytra={emojiApplyToElytra}
-            emojiSeed={emojiSeed}
-            setEmojiOpacity={setEmojiOpacity}
-            setEmojiRotation={setEmojiRotation}
-            setEmojiRandomRotation={setEmojiRandomRotation}
-            setEmojiJitter={setEmojiJitter}
-            setEmojiApplyToElytra={setEmojiApplyToElytra}
-            setEmojiSeed={setEmojiSeed}
-            textColor={textColor}
-            textStrokeEnabled={textStrokeEnabled}
-            textStrokeColor={textStrokeColor}
-            textStrokeWidth={textStrokeWidth}
-            textFont={textFont}
-            textBold={textBold}
-            textItalic={textItalic}
-            setTextColor={setTextColor}
-            setTextStrokeEnabled={setTextStrokeEnabled}
-            setTextStrokeColor={setTextStrokeColor}
-            setTextStrokeWidth={setTextStrokeWidth}
-            setTextFont={setTextFont}
-            setTextBold={setTextBold}
-            setTextItalic={setTextItalic}
+            // emoji/text props removed
           />
         </div>
       </main>

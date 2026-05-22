@@ -19,7 +19,7 @@ const TemplateGallery: FC<TemplateGalleryProps> = ({ scope, onSelectTemplate, on
     <div className="template-overlay" onClick={onClose}>
       <div className="template-modal" onClick={(e) => e.stopPropagation()}>
         <header className="template-header">
-          <h2>🎨 Design Templates</h2>
+          <h2>Design Templates</h2>
           <p>Choose a template as your starting point</p>
           <button type="button" className="template-close" onClick={onClose} aria-label="Close">×</button>
         </header>
@@ -55,13 +55,8 @@ const TemplateGallery: FC<TemplateGalleryProps> = ({ scope, onSelectTemplate, on
                             ? template.settings.gradientColors[0]
                             : `linear-gradient(${template.settings.gradDirection === 'vertical' ? '180deg' : '90deg'}, ${template.settings.gradientColors.join(', ')})`
                         }}
-                      >
-                        {template.settings.emojiEnabled && (
-                          <span className="template-emoji">{template.settings.emoji}</span>
-                        )}
-                      </div>
+                      />
                       <div className="template-info">
-                        <span className="template-icon">{template.icon}</span>
                         <span className="template-name">{template.name}</span>
                       </div>
                     </button>
