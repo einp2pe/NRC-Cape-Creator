@@ -26,15 +26,6 @@
 
 ---
 
-
-### Fonts Included
-- System: Sans-serif, Serif, Monospace, Impact, Comic Sans
-- Bold & Impact: Anton, Bebas Neue, Black Ops One, Bungee, Russo One, Oswald, Titan One, Ultra
-- Gaming & Tech: Orbitron, Press Start 2P, VT323, Bangers, Silkscreen
-- Fun & Display: Creepster, Nosifer, Monoton, Righteous, Concert One
-- Handwritten: Lobster, Pacifico, Dancing Script, Caveat, Indie Flower
-- Elegant: Playfair Display, Cinzel, Abril Fatface, Fredoka
-
 ## ✨ Features
 
 ### 🎨 Gradient Designer
