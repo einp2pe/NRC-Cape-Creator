@@ -44,30 +44,8 @@
 - Direction control — vertical or horizontal gradient flow
 - Live 2D canvas preview updates instantly
 
-
 ### 🖼️ Image Upload & Cropping
 - Three image zones: front cape, back cape, and elytra wings
-
-### (Legacy) Content Filter Details
-- Blocks profanity in English and German
-- Detects leetspeak and common obfuscations (e.g. f1ck, sh!t, @$$)
-- Filters hate symbols and obfuscated offensive content
-
-- Built-in cropper modal with free selection or "use full image"
-- Masked elytra rendering for correct shape
-
-### ✨ Text & Emoji Overlay
-- Tile text or emoji across the cape with sizing, spacing, opacity, rotation, jitter and seed
-- Large font list including system fonts and many Google Fonts
-- Stroke (outline), bold and italic styling
-
-### 🎛️ Advanced Overlay Controls
-- Size: 16px — 128px
-- Spacing: control distance between tiles
-- Opacity: 0% — 100%
-- Rotation: -180° to +180° (optional random rotation)
-- Jitter & Seed: add randomness with reproducible seed
-- Option to apply overlays to elytra separately
 
 ### 🧭 Templates & Presets
 - Built-in template gallery grouped by category (Pride, Summer, Winter, Gaming, Minecraft, Gradients, Fun)
@@ -78,55 +56,10 @@
 - Load Minecraft skins by username or upload a skin file
 - Toggle elytra rendering in the 3D viewer
 
-### 🛡️ Content Filter
-- Built-in profanity/content filter blocks offensive text (supports common obfuscations)
-
 ### 📱 Responsive Design
 - Desktop, tablet and mobile-friendly layouts
 - Touch-friendly cropper and controls
 - iOS safe-area aware
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-- Bun (recommended) or Node.js 18+
-
-### Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/einp2pe/NRC-Cape-Creator.git
-cd NRC-Cape-Creator
-
-# Install dependencies
-bun install
-
-# Start development server
-bun run dev
-```
-
-If you prefer npm/yarn:
-
-```bash
-npm install
-npm run dev
-```
-
-### Build for Production
-
-```bash
-bun run build
-```
-
-Built files are placed into `dist/`.
-
-### Deploy to GitHub Pages
-
-```bash
-bun run deploy
-```
 
 ---
 
@@ -136,9 +69,8 @@ bun run deploy
 
 1. Choose or create a gradient
 2. Upload images for front/back/elytra and crop if needed
-3. Enable text or emoji overlay and configure size, spacing, rotation and seed
-4. Optionally load a template from the gallery
-5. Download the resulting cape texture as PNG
+3. Change Color, Gradients or add of the many Templates
+3. Download the resulting cape texture as PNG
 
 ### Canvas / Cape Layout
 
@@ -151,64 +83,3 @@ bun run deploy
 | **Total Canvas** | **512×256px** | – |
 
 ---
-
-## 🛠️ Tech Stack & Key Dependencies
-
-| Technology | Purpose |
-|------------|---------|
-| React 18 | UI Framework |
-| TypeScript | Type Safety |
-| Vite | Build Tool |
-| Canvas API | Cape rendering and composition |
-| skinview3d (Three.js) | Live 3D skin/cape preview |
-| bad-words | Content filtering helper |
-| @react-three/fiber, three | 3D dependencies (used by viewer) |
-
----
-
-## 📁 Project Structure
-
-```
-NRC-Cape-Creator/
-├── public/
-│   ├── logo.svg              # App logo
-│   └── nrc_cape_template.png # Cape template image used for masking/preview
-├── src/
-│   ├── components/
-│   │   ├── LeftColumn.tsx    # Image uploads, templates button, download/reset
-│   │   ├── MiddleColumn.tsx  # Gradient, overlay controls, presets
-│   │   ├── ImageCropper.tsx  # Cropper modal (canvas-based)
-│   │   ├── GradientColorInput.tsx
-│   │   ├── TemplateGallery.tsx # Template browser
-│   │   └── CapePreview3D.tsx  # 3D skin & cape preview (skinview3d)
-│   ├── hooks/
-│   │   └── useCapeState.ts   # Centralized app state and loaders
-│   ├── data/
-│   │   └── templates.ts      # Built-in templates and categories
-│   ├── utils/
-│   │   ├── CanvasRenderer.ts # All cape drawing logic and masking
-│   │   └── contentFilter.ts  # Profanity / content filtering utilities
-│   ├── App.tsx               # Main app component
-│   ├── main.tsx              # App bootstrap
-│   └── index.css             # Global styles
-└── index.html
-```
-
----
-
-## 🤝 Contributing
-
-Contributions welcome — open issues or PRs. Suggested workflow:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/your-feature`)
-3. Commit and push changes
-4. Open a Pull Request
-
----
-
-## 🙏 Credits
-
-- NoriskClient
-- Google Fonts
-- Minecraft
