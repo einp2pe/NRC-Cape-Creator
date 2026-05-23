@@ -191,8 +191,8 @@ function App() {
               <canvas
                 ref={canvasRef}
                 id="capeCanvas"
-                width={2048}
-                height={1024}
+                width={512}
+                height={256}
                 className="cape-canvas"
                 aria-label="Cape texture preview"
               />
