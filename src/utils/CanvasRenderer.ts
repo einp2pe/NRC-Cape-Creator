@@ -201,10 +201,10 @@
 
     // Draw user images
     if (frontImage) {
-      ctx.drawImage(frontImage, this.FRONT_X, this.FRONT_Y, this.FRONT_W, this.FRONT_H)
+      this.drawAdaptiveImage(ctx, frontImage, this.FRONT_X, this.FRONT_Y, this.FRONT_W, this.FRONT_H)
     }
     if (backImage) {
-      ctx.drawImage(backImage, this.BACK_X, this.BACK_Y, this.BACK_W, this.BACK_H)
+      this.drawAdaptiveImage(ctx, backImage, this.BACK_X, this.BACK_Y, this.BACK_W, this.BACK_H)
     }
 
     // Draw elytra with masking
@@ -233,7 +233,7 @@
       const elyCtx = elyCanvas.getContext('2d')
       if (!elyCtx) return
 
-      elyCtx.drawImage(elytraImage, 0, 0, this.ELYTRA_W, this.ELYTRA_H)
+      this.drawAdaptiveImage(elyCtx, elytraImage, 0, 0, this.ELYTRA_W, this.ELYTRA_H)
       elyCtx.globalCompositeOperation = 'destination-in'
       elyCtx.drawImage(maskCanvas, 0, 0)
 
@@ -242,6 +242,24 @@
     // vanilla elytra overlay removed
 
     // restore transform to pixel canvas coordinates
+    ctx.restore()
+  }
+
+  private drawAdaptiveImage(
+    ctx: CanvasRenderingContext2D,
+    image: HTMLImageElement,
+    dx: number,
+    dy: number,
+    dw: number,
+    dh: number,
+  ): void {
+    const sourceWidth = image.naturalWidth || image.width || dw
+    const sourceHeight = image.naturalHeight || image.height || dh
+    const shouldSmooth = sourceWidth > 256 || sourceHeight > 256
+
+    ctx.save()
+    ctx.imageSmoothingEnabled = shouldSmooth
+    ctx.drawImage(image, dx, dy, dw, dh)
     ctx.restore()
   }
 

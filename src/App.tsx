@@ -40,8 +40,25 @@ function App() {
     // emoji/text removed
     reset,
     loadTemplate,
-      resetVersion,
+    resetVersion,
   } = useCapeState()
+
+  const isPixelArtImage = (image: HTMLImageElement | null) => {
+    if (!image) return false
+
+    const source = image.currentSrc || image.src || ''
+    if (source.startsWith('data:image/svg+xml') || source.endsWith('.svg')) {
+      return false
+    }
+
+    const sourceWidth = image.naturalWidth || image.width
+    const sourceHeight = image.naturalHeight || image.height
+    if (!sourceWidth || !sourceHeight) return false
+
+    return sourceWidth <= 256 && sourceHeight <= 256
+  }
+
+  const usePixelatedPreview = [frontImage, backImage, elytraImage].every((image) => !image || isPixelArtImage(image))
 
   const renderer = CanvasRenderer.getInstance()
 
@@ -194,6 +211,7 @@ function App() {
                 width={512}
                 height={256}
                 className="cape-canvas"
+                style={{ imageRendering: usePixelatedPreview ? 'pixelated' : 'auto' }}
                 aria-label="Cape texture preview"
               />
             </div>

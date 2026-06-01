@@ -100,8 +100,10 @@ const ImageCropper: FC<ImageCropperProps> = ({
     const image = imageRef.current
     if (!canvas || !image) return
 
-    canvas.width = image.width
-    canvas.height = image.height
+    const sourceWidth = image.naturalWidth || image.width
+    const sourceHeight = image.naturalHeight || image.height
+    canvas.width = sourceWidth
+    canvas.height = sourceHeight
 
     const ctx = canvas.getContext('2d')
     if (!ctx) return
@@ -175,6 +177,9 @@ const ImageCropper: FC<ImageCropperProps> = ({
     const image = imageRef.current
     if (!canvas || !image) return
 
+    const sourceWidth = image.naturalWidth || image.width
+    const sourceHeight = image.naturalHeight || image.height
+
     // If aspect mode is active, use aspectBox; otherwise use free-draw coords
     let minX: number, minY: number, cropWidth: number, cropHeight: number
     if (aspectMode && aspectBox) {
@@ -186,8 +191,8 @@ const ImageCropper: FC<ImageCropperProps> = ({
       if (!startPos || !endPos) return
       minX = Math.max(0, Math.min(startPos.x, endPos.x))
       minY = Math.max(0, Math.min(startPos.y, endPos.y))
-      const maxX = Math.min(canvas.width, Math.max(startPos.x, endPos.x))
-      const maxY = Math.min(canvas.height, Math.max(startPos.y, endPos.y))
+      const maxX = Math.min(sourceWidth, Math.max(startPos.x, endPos.x))
+      const maxY = Math.min(sourceHeight, Math.max(startPos.y, endPos.y))
       cropWidth = Math.max(1, maxX - minX)
       cropHeight = Math.max(1, maxY - minY)
     }
@@ -198,6 +203,8 @@ const ImageCropper: FC<ImageCropperProps> = ({
 
     const cropCtx = cropCanvas.getContext('2d')
     if (!cropCtx) return
+
+    cropCtx.imageSmoothingEnabled = false
 
     cropCtx.drawImage(image, minX, minY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight)
 
