@@ -1,0 +1,66 @@
+@use "@/styles/mixins" as *;
+@use "@/styles/viewports" as *;
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.label {
+  @include section-label;
+}
+
+.track {
+  display: inline-grid;
+  grid-auto-columns: minmax(6.5rem, auto);
+  grid-auto-flow: column;
+  align-self: flex-start;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs);
+  background: var(--ghost-bg);
+  border: 1px solid var(--ghost-border);
+  border-radius: var(--corner-radius-md);
+
+  @include mobile {
+    align-self: stretch;
+  }
+}
+
+.segment {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  height: 1.875rem;
+  padding: 0 var(--spacing-lg);
+  border-radius: var(--corner-radius-sm);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-font-tertiary);
+  cursor: pointer;
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast);
+
+  &:hover:not(.active) {
+    color: var(--color-font);
+  }
+
+  svg {
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+  }
+}
+
+.active {
+  background: var(--ghost-bg-active);
+  color: var(--color-purple);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .segment {
+    transition: none;
+  }
+}
