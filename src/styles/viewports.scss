@@ -1,0 +1,62 @@
+@use "sass:map";
+
+$breakpoints: (
+  mobile: 0,
+  tablet: 769px,
+  desktop: 1024px,
+  widescreen: 1216px,
+);
+
+@mixin from($breakpoint) {
+  @media screen and (min-width: map.get($breakpoints, $breakpoint)) {
+    @content;
+  }
+}
+
+@mixin until($breakpoint) {
+  @media screen and (max-width: calc(map.get($breakpoints, $breakpoint) - 1px)) {
+    @content;
+  }
+}
+
+@mixin between($lower, $upper) {
+  @media screen and (min-width: map.get($breakpoints, $lower)) and (max-width: calc(map.get($breakpoints, $upper) - 1px)) {
+    @content;
+  }
+}
+
+@mixin mobile {
+  @include until(tablet) {
+    @content;
+  }
+}
+
+@mixin touch {
+  @include until(desktop) {
+    @content;
+  }
+}
+
+@mixin tablet {
+  @include from(tablet) {
+    @content;
+  }
+}
+
+@mixin desktop {
+  @include from(desktop) {
+    @content;
+  }
+}
+
+@mixin widescreen {
+  @include from(widescreen) {
+    @content;
+  }
+}
+
+@mixin landscape-short {
+  @media screen and (max-height: 600px) and (orientation: landscape) {
+    @content;
+  }
+}
