@@ -1,0 +1,113 @@
+@use "@/styles/mixins" as *;
+@use "@/styles/viewports" as *;
+
+.viewer {
+  @include panel;
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+  padding: var(--spacing-3xl);
+}
+
+.stage {
+  position: relative;
+  width: 100%;
+  height: clamp(260px, 34dvh, 330px);
+  background: var(--ghost-surface-bg);
+  border-radius: var(--corner-radius-md);
+  overflow: hidden;
+
+  canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+    touch-action: none;
+  }
+
+  @include landscape-short {
+    height: 220px;
+  }
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--spacing-md);
+}
+
+.input {
+  height: var(--ghost-height);
+  padding: 0 0.75rem;
+  min-width: 0;
+  background: var(--ghost-bg);
+  border: 1px solid var(--ghost-border);
+  border-radius: var(--corner-radius-md);
+  font-size: var(--ghost-font-size);
+  color: var(--color-font);
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast);
+
+  &::placeholder {
+    color: var(--color-font-tertiary);
+  }
+
+  &:hover:not(:disabled) {
+    border-color: var(--ghost-border-hover);
+  }
+
+  &:focus {
+    outline: none;
+    background: var(--ghost-bg-hover);
+    border-color: var(--ghost-border-active);
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+
+  &:disabled {
+    opacity: 0.45;
+  }
+}
+
+.fileInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.spinner {
+  animation: spin 0.7s linear infinite;
+}
+
+.error {
+  @include small-text;
+
+  color: var(--color-red);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .input {
+    transition: none;
+  }
+
+  .spinner {
+    animation: none;
+  }
+}
