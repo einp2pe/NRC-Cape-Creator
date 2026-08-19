@@ -1,384 +1,297 @@
-﻿class CanvasRenderer {
-  private static instance: CanvasRenderer | null = null
-  private templateImg: HTMLImageElement | null = null
-  private templateReady: boolean = false
-  private templateReadyListeners: Array<() => void> = []
-  // vanilla elytra removed
+import type { GradientDirection } from "@/data/templates";
+import type { CapeImages } from "@/hooks/useCapeState";
 
-  private readonly FRONT_X = 8
-  private readonly FRONT_Y = 8
-  private readonly FRONT_W = 80
-  private readonly FRONT_H = 128
+const BASE_WIDTH = 512;
+const BASE_HEIGHT = 256;
 
-  private readonly BACK_X = 96
-  private readonly BACK_Y = 8
-  private readonly BACK_W = 80
-  private readonly BACK_H = 128
+const FALLBACK_COLOR = "#002aff";
 
-  private readonly ELYTRA_X = 288
-  private readonly ELYTRA_Y = 16
-  private readonly ELYTRA_W = 80
-  private readonly ELYTRA_H = 160
+const ZONES = {
+  front: { x: 8, y: 8, width: 80, height: 128 },
+  back: { x: 96, y: 8, width: 80, height: 128 },
+  elytra: { x: 288, y: 16, width: 80, height: 160 },
+} as const;
 
-  // Template "bottom" strip (maps to front of cape)
-  // In template: 88,0 to 167,7 (80x8 pixels)
-  // Rendered on cape front: 8,8 to 87,135 (80x128 pixels)
-  private readonly BOTTOM_STRIP_X = 88
-  private readonly BOTTOM_STRIP_Y = 0
-  private readonly BOTTOM_STRIP_W = 80
-  private readonly BOTTOM_STRIP_H = 8
+const CAPE_FILL = { x: 0, y: 0, width: 176, height: 136 };
+const CAPE_GRADIENT = { x: 8, y: 8, width: 168, height: 128 };
 
-  // Elytra "bottom" strip (maps to below elytra)
-  // In template: 272,0 to 319,7 (48x8 pixels)
-  // Rendered below elytra: 320,176 to 367,183 (48x8 pixels)
-  private readonly ELYTRA_BOTTOM_STRIP_X = 272
-  private readonly ELYTRA_BOTTOM_STRIP_Y = 0
-  private readonly ELYTRA_BOTTOM_STRIP_W = 48
-  private readonly ELYTRA_BOTTOM_STRIP_H = 8
-  // Where it actually renders (continuation area)
-  // continuation coords removed (unused)
+const ELYTRA_FILL = { x: 176, y: 0, width: 192, height: 176 };
+const ELYTRA_GRADIENT = { x: 272, y: 16, width: 96, height: 160 };
 
-  private constructor() {
-    this.initTemplate()
+const CAPE_BOTTOM_STRIP = { x: 88, y: 0, width: 80, height: 8 };
+const ELYTRA_BOTTOM_STRIP = { x: 272, y: 0, width: 48, height: 8 };
+
+type Box = { x: number; y: number; width: number; height: number };
+
+export type DrawOptions = {
+  images: CapeImages;
+  gradientColors: string[];
+  gradDirection: GradientDirection;
+  separateElytraGradient: boolean;
+  elytraGradientColors: string[] | null;
+  elytraGradDirection: GradientDirection;
+};
+
+export class CanvasRenderer {
+  private templateImage: HTMLImageElement | null = null;
+  private templateReady = false;
+  private readyListeners = new Set<() => void>();
+
+  private maskCanvas: HTMLCanvasElement | null = null;
+  private elytraCanvas: HTMLCanvasElement | null = null;
+
+  constructor() {
+    this.loadTemplate();
   }
 
-  static getInstance(): CanvasRenderer {
-    if (!CanvasRenderer.instance) {
-      CanvasRenderer.instance = new CanvasRenderer()
-    }
-    return CanvasRenderer.instance
+  get isTemplateReady() {
+    return this.templateReady;
   }
 
   onTemplateReady(listener: () => void): () => void {
     if (this.templateReady) {
-      listener()
-      return () => {}
+      listener();
+      return () => undefined;
     }
-    this.templateReadyListeners.push(listener)
-    return () => {
-      this.templateReadyListeners = this.templateReadyListeners.filter((l) => l !== listener)
-    }
+
+    this.readyListeners.add(listener);
+    return () => this.readyListeners.delete(listener);
   }
 
-  private notifyTemplateReady(): void {
-    if (this.templateReadyListeners.length === 0) return
-    const listeners = [...this.templateReadyListeners]
-    this.templateReadyListeners = []
-    listeners.forEach((listener) => listener())
+  private loadTemplate() {
+    const image = new Image();
+
+    image.onload = () => {
+      this.templateReady = true;
+      this.readyListeners.forEach((listener) => listener());
+      this.readyListeners.clear();
+    };
+    image.onerror = () => {
+      console.error("Cape template failed to load");
+      this.readyListeners.clear();
+    };
+
+    image.src = `${import.meta.env.BASE_URL}nrc_cape_template.png`;
+    this.templateImage = image;
   }
 
-  private initTemplate(): void {
-    this.templateImg = new Image()
-    // Try loading the template from the public folder using Vite base URL
-    const templatePath = `${import.meta.env.BASE_URL}nrc_cape_template.png`
-    const fallbackLogo = `${import.meta.env.BASE_URL}logo.svg`
+  drawCape(canvas: HTMLCanvasElement, options: DrawOptions): void {
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
 
-    this.templateImg.src = templatePath
-    this.templateImg.onload = () => {
-      this.templateReady = true
-      this.notifyTemplateReady()
-    }
-    // If the PNG is not found, try falling back to the project logo (SVG)
-    this.templateImg.onerror = () => {
-      // attempt fallback
-      this.templateImg!.onerror = () => {
-        this.templateReady = false
-        this.notifyTemplateReady()
-      }
-      this.templateImg!.src = fallbackLogo
-    }
-
-    // vanilla elytra asset removed — overlay no longer used
-  }
-
-  drawCape(
-    canvas: HTMLCanvasElement,
-    frontImage: HTMLImageElement | null,
-    backImage: HTMLImageElement | null,
-    elytraImage: HTMLImageElement | null,
-    gradientColors: string[],
-    gradDirection: 'vertical' | 'horizontal',
-    options?: {
-      // optional separate elytra gradient
-      separateElytraGradient?: boolean
-      elytraGradientColors?: string[] | null
-      elytraGradDirection?: 'vertical' | 'horizontal'
-      // vanillaElytraEnabled removed
-    }
-  ): void {
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-
-    // Base template dimensions used by the renderer.
-    // The template image is 512x256 and all coordinates below are defined in that space.
-    const BASE_WIDTH = 512
-    const BASE_HEIGHT = 256
-
-    // Clear canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
-
-    // Scale drawing operations so template coordinates map to current canvas size
-    const scaleX = canvas.width / BASE_WIDTH
-    const scaleY = canvas.height / BASE_HEIGHT
-    ctx.save()
-    ctx.scale(scaleX, scaleY)
-
-    // Draw template base if ready (coordinates are in base units)
-    if (this.templateReady && this.templateImg) {
-      ctx.globalCompositeOperation = 'source-over'
-      ctx.drawImage(this.templateImg, 0, 0, BASE_WIDTH, BASE_HEIGHT)
-    } else {
-      ctx.globalCompositeOperation = 'source-over'
-    }
-
-    // Cape area: fill 0,0 to 176,136, gradient starts at 8,8
-    const CAPE_FILL_X = 0
-    const CAPE_FILL_Y = 0
-    const CAPE_FILL_W = 176
-    const CAPE_FILL_H = 136
-    const CAPE_GRAD_START_X = 8
-    const CAPE_GRAD_START_Y = 8
-    const CAPE_GRAD_W = 168  // from 8 to 176
-    const CAPE_GRAD_H = 128  // from 8 to 136
-    const capeGradient = this.createGradientAt(ctx, CAPE_GRAD_START_X, CAPE_GRAD_START_Y, CAPE_GRAD_W, CAPE_GRAD_H, gradientColors, gradDirection)
-    // Before template is ready, render directly so a white cape appears immediately.
-    ctx.globalCompositeOperation = this.templateReady && this.templateImg ? 'source-atop' : 'source-over'
-    ctx.fillStyle = capeGradient
-    ctx.fillRect(CAPE_FILL_X, CAPE_FILL_Y, CAPE_FILL_W, CAPE_FILL_H)
-
-    // Bottom strip area (maps to front): continues below front area
-    // The strip at 88,0 to 167,7 represents Y=136 to Y=143 below front (continuation)
-    // Gradient should continue from where front ends
-    const bottomStripGradient = this.createContinuationGradient(
-      ctx,
-      this.BOTTOM_STRIP_X,
-      this.BOTTOM_STRIP_Y,
-      this.BOTTOM_STRIP_W,
-      this.BOTTOM_STRIP_H,
+    const {
+      images,
       gradientColors,
       gradDirection,
-      this.FRONT_H,  // front height (where we continue from)
-      this.BOTTOM_STRIP_H  // strip height (continuation length)
-    )
-    ctx.fillStyle = bottomStripGradient
-    ctx.fillRect(this.BOTTOM_STRIP_X, this.BOTTOM_STRIP_Y, this.BOTTOM_STRIP_W, this.BOTTOM_STRIP_H)
+      separateElytraGradient,
+      elytraGradientColors,
+      elytraGradDirection,
+    } = options;
 
-    // Elytra area: fill 176,0 to 368,176, gradient starts at 272,16
-    const ELYTRA_FILL_X = 176
-    const ELYTRA_FILL_Y = 0
-    const ELYTRA_FILL_W = 192  // from 176 to 368
-    const ELYTRA_FILL_H = 176
-    const ELYTRA_GRAD_START_X = 272
-    const ELYTRA_GRAD_START_Y = 16
-    const ELYTRA_GRAD_W = 96   // from 272 to 368
-    const ELYTRA_GRAD_H = 160  // from 16 to 176
-    const elytraColors = options?.separateElytraGradient && options?.elytraGradientColors ? options.elytraGradientColors : gradientColors
-    const elytraDir = options?.separateElytraGradient && options?.elytraGradDirection ? options.elytraGradDirection : gradDirection
-    const elytraGradient = this.createGradientAt(ctx, ELYTRA_GRAD_START_X, ELYTRA_GRAD_START_Y, ELYTRA_GRAD_W, ELYTRA_GRAD_H, elytraColors!, elytraDir)
-    ctx.fillStyle = elytraGradient
-    ctx.fillRect(ELYTRA_FILL_X, ELYTRA_FILL_Y, ELYTRA_FILL_W, ELYTRA_FILL_H)
+    const elytraColors =
+      separateElytraGradient && elytraGradientColors
+        ? elytraGradientColors
+        : gradientColors;
+    const elytraDirection = separateElytraGradient
+      ? elytraGradDirection
+      : gradDirection;
 
-    // Elytra bottom strip area: continues below elytra area
-    // The strip at 272,0 to 319,7 represents Y=176 to Y=183 below elytra (continuation)
-    // Gradient should continue from where elytra ends
-    const elytraBottomStripGradient = this.createContinuationGradient(
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.save();
+    ctx.scale(canvas.width / BASE_WIDTH, canvas.height / BASE_HEIGHT);
+    ctx.globalCompositeOperation = "source-over";
+
+    const template = this.templateReady ? this.templateImage : null;
+    if (template) {
+      ctx.drawImage(template, 0, 0, BASE_WIDTH, BASE_HEIGHT);
+    }
+
+    ctx.globalCompositeOperation = template ? "source-atop" : "source-over";
+
+    this.fillRegion(
       ctx,
-      this.ELYTRA_BOTTOM_STRIP_X,
-      this.ELYTRA_BOTTOM_STRIP_Y,
-      this.ELYTRA_BOTTOM_STRIP_W,
-      this.ELYTRA_BOTTOM_STRIP_H,
-      elytraColors!,
-      elytraDir,
-      this.ELYTRA_H,  // elytra height (where we continue from)
-      this.ELYTRA_BOTTOM_STRIP_H  // strip height (continuation length)
-    )
-    ctx.fillStyle = elytraBottomStripGradient
-    ctx.fillRect(this.ELYTRA_BOTTOM_STRIP_X, this.ELYTRA_BOTTOM_STRIP_Y, this.ELYTRA_BOTTOM_STRIP_W, this.ELYTRA_BOTTOM_STRIP_H)
+      CAPE_FILL,
+      CAPE_GRADIENT,
+      gradientColors,
+      gradDirection
+    );
+    this.fillContinuation(
+      ctx,
+      CAPE_BOTTOM_STRIP,
+      gradientColors,
+      gradDirection,
+      ZONES.front.height
+    );
 
-    // emoji/text rendering removed
+    this.fillRegion(
+      ctx,
+      ELYTRA_FILL,
+      ELYTRA_GRADIENT,
+      elytraColors,
+      elytraDirection
+    );
+    this.fillContinuation(
+      ctx,
+      ELYTRA_BOTTOM_STRIP,
+      elytraColors,
+      elytraDirection,
+      ZONES.elytra.height
+    );
 
-    ctx.globalCompositeOperation = 'source-over'
+    ctx.globalCompositeOperation = "source-over";
 
-    // Draw user images
-    if (frontImage) {
-      this.drawAdaptiveImage(ctx, frontImage, this.FRONT_X, this.FRONT_Y, this.FRONT_W, this.FRONT_H)
+    if (images.front) this.drawImage(ctx, images.front, ZONES.front);
+    if (images.back) this.drawImage(ctx, images.back, ZONES.back);
+    if (images.elytra && template) {
+      this.drawMaskedElytra(ctx, template, images.elytra);
     }
-    if (backImage) {
-      this.drawAdaptiveImage(ctx, backImage, this.BACK_X, this.BACK_Y, this.BACK_W, this.BACK_H)
-    }
 
-    // Draw elytra with masking
-    if (elytraImage && this.templateReady && this.templateImg) {
-      const maskCanvas = document.createElement('canvas')
-      maskCanvas.width = this.ELYTRA_W
-      maskCanvas.height = this.ELYTRA_H
-      const maskCtx = maskCanvas.getContext('2d')
-      if (!maskCtx) return
-
-      maskCtx.drawImage(
-        this.templateImg,
-        this.ELYTRA_X,
-        this.ELYTRA_Y,
-        this.ELYTRA_W,
-        this.ELYTRA_H,
-        0,
-        0,
-        this.ELYTRA_W,
-        this.ELYTRA_H
-      )
-
-      const elyCanvas = document.createElement('canvas')
-      elyCanvas.width = this.ELYTRA_W
-      elyCanvas.height = this.ELYTRA_H
-      const elyCtx = elyCanvas.getContext('2d')
-      if (!elyCtx) return
-
-      this.drawAdaptiveImage(elyCtx, elytraImage, 0, 0, this.ELYTRA_W, this.ELYTRA_H)
-      elyCtx.globalCompositeOperation = 'destination-in'
-      elyCtx.drawImage(maskCanvas, 0, 0)
-
-      ctx.drawImage(elyCanvas, this.ELYTRA_X, this.ELYTRA_Y)
-    }
-    // vanilla elytra overlay removed
-
-    // restore transform to pixel canvas coordinates
-    ctx.restore()
+    ctx.restore();
   }
 
-  private drawAdaptiveImage(
+  private fillRegion(
+    ctx: CanvasRenderingContext2D,
+    fill: Box,
+    gradientBox: Box,
+    colors: string[],
+    direction: GradientDirection
+  ) {
+    ctx.fillStyle = this.createGradient(ctx, gradientBox, colors, direction);
+    ctx.fillRect(fill.x, fill.y, fill.width, fill.height);
+  }
+
+  private createGradient(
+    ctx: CanvasRenderingContext2D,
+    box: Box,
+    colors: string[],
+    direction: GradientDirection
+  ): CanvasGradient {
+    const gradient =
+      direction === "vertical"
+        ? ctx.createLinearGradient(box.x, box.y, box.x, box.y + box.height)
+        : ctx.createLinearGradient(box.x, box.y, box.x + box.width, box.y);
+
+    if (colors.length === 0) {
+      gradient.addColorStop(0, FALLBACK_COLOR);
+      gradient.addColorStop(1, FALLBACK_COLOR);
+    } else if (colors.length === 1) {
+      gradient.addColorStop(0, colors[0]);
+      gradient.addColorStop(1, colors[0]);
+    } else {
+      const lastIndex = colors.length - 1;
+      colors.forEach((color, index) => {
+        gradient.addColorStop(index / lastIndex, color);
+      });
+    }
+
+    return gradient;
+  }
+
+  private fillContinuation(
+    ctx: CanvasRenderingContext2D,
+    strip: Box,
+    colors: string[],
+    direction: GradientDirection,
+    regionHeight: number
+  ) {
+    if (direction === "horizontal" || colors.length < 2) {
+      this.fillRegion(ctx, strip, strip, colors, direction);
+      return;
+    }
+
+    const gradient = ctx.createLinearGradient(
+      strip.x,
+      strip.y,
+      strip.x,
+      strip.y + strip.height
+    );
+
+    const totalHeight = regionHeight + strip.height;
+    const lastIndex = colors.length - 1;
+
+    const colorAt = (ratio: number) => {
+      const position = ratio * lastIndex;
+      const lower = Math.floor(position);
+      const upper = Math.min(lower + 1, lastIndex);
+      return interpolateColor(colors[lower], colors[upper], position - lower);
+    };
+
+    gradient.addColorStop(0, colorAt(regionHeight / totalHeight));
+    gradient.addColorStop(1, colorAt(1));
+
+    ctx.fillStyle = gradient;
+    ctx.fillRect(strip.x, strip.y, strip.width, strip.height);
+  }
+
+  private drawImage(
     ctx: CanvasRenderingContext2D,
     image: HTMLImageElement,
-    dx: number,
-    dy: number,
-    dw: number,
-    dh: number,
-  ): void {
-    const sourceWidth = image.naturalWidth || image.width || dw
-    const sourceHeight = image.naturalHeight || image.height || dh
-    const shouldSmooth = sourceWidth > 256 || sourceHeight > 256
+    box: Box
+  ) {
+    const width = image.naturalWidth || image.width || box.width;
+    const height = image.naturalHeight || image.height || box.height;
 
-    ctx.save()
-    ctx.imageSmoothingEnabled = shouldSmooth
-    ctx.drawImage(image, dx, dy, dw, dh)
-    ctx.restore()
+    ctx.save();
+    ctx.imageSmoothingEnabled = width > 256 || height > 256;
+    ctx.drawImage(image, box.x, box.y, box.width, box.height);
+    ctx.restore();
   }
 
-  private createGradientAt(
+  private drawMaskedElytra(
     ctx: CanvasRenderingContext2D,
-    x: number,
-    y: number,
-    width: number,
-    height: number,
-    colors: string[],
-    direction: 'vertical' | 'horizontal'
-  ): CanvasGradient {
-    let gradient: CanvasGradient
+    template: HTMLImageElement,
+    image: HTMLImageElement
+  ) {
+    const { x, y, width, height } = ZONES.elytra;
 
-    if (direction === 'vertical') {
-      gradient = ctx.createLinearGradient(x, y, x, y + height)
-    } else {
-      gradient = ctx.createLinearGradient(x, y, x + width, y)
-    }
+    this.maskCanvas ??= document.createElement("canvas");
+    this.elytraCanvas ??= document.createElement("canvas");
 
-    if (colors.length === 0) {
-      gradient.addColorStop(0, '#002aff')
-      gradient.addColorStop(1, '#002aff')
-    } else if (colors.length === 1) {
-      gradient.addColorStop(0, colors[0])
-      gradient.addColorStop(1, colors[0])
-    } else {
-      const n = colors.length - 1
-      colors.forEach((color, i) => {
-        gradient.addColorStop(i / n, color)
-      })
-    }
+    const maskCtx = sizedContext(this.maskCanvas, width, height);
+    const elytraCtx = sizedContext(this.elytraCanvas, width, height);
+    if (!maskCtx || !elytraCtx) return;
 
-    return gradient
-  }
+    maskCtx.drawImage(template, x, y, width, height, 0, 0, width, height);
 
-  // Create a gradient that continues from where the front area ends
-  // This is used for the bottom strip which represents Y=136+ (below front)
-  private createContinuationGradient(
-    ctx: CanvasRenderingContext2D,
-    x: number,
-    y: number,
-    width: number,
-    height: number,
-    colors: string[],
-    direction: 'vertical' | 'horizontal',
-    frontHeight: number,
-    stripHeight: number
-  ): CanvasGradient {
-    let gradient: CanvasGradient
+    this.drawImage(elytraCtx, image, { x: 0, y: 0, width, height });
+    elytraCtx.globalCompositeOperation = "destination-in";
+    elytraCtx.drawImage(this.maskCanvas, 0, 0);
+    elytraCtx.globalCompositeOperation = "source-over";
 
-    if (direction === 'vertical') {
-      // For vertical gradient, we need to show the colors that would appear
-      // at Y=136 to Y=143 if the gradient continued past the front area
-      // The front area is 128px, strip is 8px, so we're showing 128/136 to 136/136 of the gradient
-      gradient = ctx.createLinearGradient(x, y, x, y + height)
-    } else {
-      // For horizontal gradient, just continue the same gradient
-      gradient = ctx.createLinearGradient(x, y, x + width, y)
-    }
-
-    if (colors.length === 0) {
-      gradient.addColorStop(0, '#002aff')
-      gradient.addColorStop(1, '#002aff')
-    } else if (colors.length === 1) {
-      gradient.addColorStop(0, colors[0])
-      gradient.addColorStop(1, colors[0])
-    } else {
-      if (direction === 'vertical') {
-        // Calculate where in the overall gradient we are (128-136 out of 136 total)
-        const totalHeight = frontHeight + stripHeight  // 136
-        const startRatio = frontHeight / totalHeight   // 128/136 ≈ 0.941
-        const endRatio = 1.0                           // 136/136 = 1.0
-        
-        // Interpolate colors for this portion of the gradient
-        const n = colors.length - 1
-        
-        // Find the color at startRatio and endRatio
-        const getColorAtRatio = (ratio: number) => {
-          const pos = ratio * n
-          const lowerIdx = Math.floor(pos)
-          const upperIdx = Math.min(lowerIdx + 1, n)
-          const t = pos - lowerIdx
-          return this.interpolateColor(colors[lowerIdx], colors[upperIdx], t)
-        }
-        
-        gradient.addColorStop(0, getColorAtRatio(startRatio))
-        gradient.addColorStop(1, getColorAtRatio(endRatio))
-      } else {
-        // Horizontal: same as normal gradient
-        const n = colors.length - 1
-        colors.forEach((color, i) => {
-          gradient.addColorStop(i / n, color)
-        })
-      }
-    }
-
-    return gradient
-  }
-
-  // Helper to interpolate between two hex colors
-  private interpolateColor(color1: string, color2: string, t: number): string {
-    const hex1 = color1.replace('#', '')
-    const hex2 = color2.replace('#', '')
-    
-    const r1 = parseInt(hex1.substring(0, 2), 16)
-    const g1 = parseInt(hex1.substring(2, 4), 16)
-    const b1 = parseInt(hex1.substring(4, 6), 16)
-    
-    const r2 = parseInt(hex2.substring(0, 2), 16)
-    const g2 = parseInt(hex2.substring(2, 4), 16)
-    const b2 = parseInt(hex2.substring(4, 6), 16)
-    
-    const r = Math.round(r1 + (r2 - r1) * t)
-    const g = Math.round(g1 + (g2 - g1) * t)
-    const b = Math.round(b1 + (b2 - b1) * t)
-    
-    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
+    ctx.drawImage(this.elytraCanvas, x, y);
   }
 }
 
-export default CanvasRenderer
+function sizedContext(
+  canvas: HTMLCanvasElement,
+  width: number,
+  height: number
+): CanvasRenderingContext2D | null {
+  canvas.width = width;
+  canvas.height = height;
+
+  const ctx = canvas.getContext("2d");
+  ctx?.clearRect(0, 0, width, height);
+  return ctx;
+}
+
+function interpolateColor(from: string, to: string, t: number): string {
+  const parse = (hex: string) => {
+    const value = hex.replace("#", "");
+    return [
+      parseInt(value.substring(0, 2), 16),
+      parseInt(value.substring(2, 4), 16),
+      parseInt(value.substring(4, 6), 16),
+    ];
+  };
+
+  const [r1, g1, b1] = parse(from);
+  const [r2, g2, b2] = parse(to);
+
+  const channel = (a: number, b: number) =>
+    Math.round(a + (b - a) * t)
+      .toString(16)
+      .padStart(2, "0");
+
+  return `#${channel(r1, r2)}${channel(g1, g2)}${channel(b1, b2)}`;
+}
