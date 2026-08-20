@@ -1,0 +1,35 @@
+@mixin text-size($font-size, $line-height) {
+  font-size: $font-size;
+  line-height: $line-height;
+}
+
+@mixin small-text {
+  @include text-size(0.8125rem, 1.5);
+}
+
+@mixin normal-text {
+  @include text-size(1rem, 1.625);
+}
+
+@mixin big-text {
+  @include text-size(1.125rem, 1.6);
+}
+
+@mixin section-label {
+  @include text-size(0.6875rem, 1);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-font-tertiary);
+}
+
+@mixin panel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-outline);
+  border-radius: var(--corner-radius-lg);
+}
+
+@mixin focus-ring {
+  outline: 2px solid var(--color-purple);
+  outline-offset: 2px;
+}

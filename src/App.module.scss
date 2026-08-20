@@ -1,0 +1,76 @@
+@use "@/styles/mixins" as *;
+@use "@/styles/viewports" as *;
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  padding-bottom: var(--safe-area-bottom);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  height: var(--header-height);
+  padding: 0 var(--spacing-3xl);
+  padding-top: var(--safe-area-top);
+  border-bottom: 1px solid var(--color-outline);
+}
+
+.title {
+  display: flex;
+  margin: 0;
+}
+
+.logo {
+  height: 26px;
+  width: auto;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3xl);
+  width: 100%;
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  padding: var(--spacing-4xl) var(--spacing-3xl) var(--spacing-6xl);
+
+  @include mobile {
+    gap: var(--spacing-xl);
+    padding: var(--spacing-3xl) var(--spacing-xl) var(--spacing-4xl);
+  }
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr var(--rail-width, 360px);
+  gap: var(--spacing-3xl);
+  align-items: start;
+
+  @include until(desktop) {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-xl);
+  }
+}
+
+.texture {
+  @include panel;
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+  padding: var(--spacing-3xl);
+}
+
+.canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: var(--ghost-surface-bg);
+  border-radius: var(--corner-radius-md);
+}
+
+.textureLabel {
+  @include section-label;
+}

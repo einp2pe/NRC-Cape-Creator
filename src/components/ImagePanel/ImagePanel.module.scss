@@ -1,0 +1,139 @@
+@use "@/styles/mixins" as *;
+@use "@/styles/viewports" as *;
+
+.panel {
+  @include panel;
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4xl);
+  padding: var(--spacing-3xl);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.title {
+  @include section-label;
+
+  font-family: inherit;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-md);
+
+  @include mobile {
+    grid-template-columns: 1fr;
+  }
+}
+
+.slotWrapper {
+  position: relative;
+}
+
+.slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+  width: 100%;
+  min-height: 5.25rem;
+  padding: var(--spacing-xl) var(--spacing-md);
+  background: var(--ghost-bg);
+  border: 1px solid var(--ghost-border);
+  border-radius: var(--corner-radius-md);
+  color: var(--color-font-tertiary);
+  cursor: pointer;
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast);
+
+  &:hover {
+    background: var(--ghost-bg-hover);
+    border-color: var(--ghost-border-hover);
+    color: var(--color-font);
+  }
+
+  &:has(.fileInput:focus-visible) {
+    @include focus-ring;
+  }
+
+  @include mobile {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: var(--spacing-lg);
+    min-height: 0;
+    padding: var(--spacing-lg) var(--spacing-xl);
+  }
+}
+
+.slotFilled {
+  background: var(--ghost-bg-active);
+  border-color: var(--ghost-border-active);
+  color: var(--color-purple);
+}
+
+.slotIcon {
+  display: grid;
+  place-items: center;
+}
+
+.slotLabel {
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.fileInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.remove {
+  position: absolute;
+  top: calc(var(--spacing-sm) * -1);
+  right: calc(var(--spacing-sm) * -1);
+  display: grid;
+  place-items: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--ghost-border);
+  border-radius: var(--corner-radius-full);
+  color: var(--color-font-tertiary);
+  cursor: pointer;
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast);
+
+  &:hover {
+    background: color-mix(in srgb, var(--color-red) 16%, transparent);
+    border-color: color-mix(in srgb, var(--color-red) 40%, transparent);
+    color: var(--color-red);
+  }
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--spacing-md);
+  margin-top: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slot,
+  .remove {
+    transition: none;
+  }
+}

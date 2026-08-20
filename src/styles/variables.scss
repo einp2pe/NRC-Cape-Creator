@@ -1,0 +1,66 @@
+:root {
+  --ease-default: cubic-bezier(0.48, 0.05, 0.5, 1);
+  --transition-fast: 0.15s var(--ease-default);
+  --transition-base: 0.25s var(--ease-default);
+
+  --color-background: #0a0a0a;
+  --color-surface: #111111;
+  --color-surface-raised: #151515;
+
+  --color-font: hsl(0, 0%, 97%);
+  --color-font-secondary: hsl(220, 4%, 72%);
+  --color-font-tertiary: hsl(220, 4%, 60%);
+
+  --color-purple: rgb(167, 139, 250);
+  --color-purple-shade: rgb(92, 75, 145);
+  --color-green: #4ade80;
+  --color-red: hsl(348, 100%, 70%);
+
+  --color-outline: hsl(240, 3%, 13%);
+  --color-outline-strong: rgba(255, 255, 255, 0.12);
+
+  --ghost-height: 2.25rem;
+  --ghost-font-size: 0.8125rem;
+  --ghost-bg: rgba(255, 255, 255, 0.04);
+  --ghost-border: rgba(255, 255, 255, 0.08);
+  --ghost-bg-hover: rgba(255, 255, 255, 0.08);
+  --ghost-border-hover: rgba(255, 255, 255, 0.16);
+  --ghost-bg-active: color-mix(in srgb, var(--color-purple) 12%, transparent);
+  --ghost-border-active: color-mix(
+    in srgb,
+    var(--color-purple) 30%,
+    transparent
+  );
+  --ghost-surface-bg: rgb(10, 10, 10);
+
+  --corner-radius-sm: 4px;
+  --corner-radius-md: 8px;
+  --corner-radius-lg: 16px;
+  --corner-radius-xl: 32px;
+  --corner-radius-full: 9999px;
+
+  --spacing-xxs: 2px;
+  --spacing-xs: 4px;
+  --spacing-sm: 6px;
+  --spacing-md: 8px;
+  --spacing-lg: 12px;
+  --spacing-xl: 16px;
+  --spacing-2xl: 20px;
+  --spacing-3xl: 24px;
+  --spacing-4xl: 32px;
+  --spacing-5xl: 40px;
+  --spacing-6xl: 48px;
+
+  --color-shadow: hsla(217, 16%, 16%, 60%);
+  --shadow-sm: 0 1px 3px 0 var(--color-shadow);
+  --shadow-md: 0 4px 8px -1px var(--color-shadow);
+  --shadow-lg: 0 8px 20px -2px var(--color-shadow);
+
+  --font-body: "Outfit";
+  --font-mc: "Minecraft";
+
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --header-height: 64px;
+  --content-max-width: 1180px;
+}
