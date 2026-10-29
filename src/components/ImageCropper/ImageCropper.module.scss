@@ -49,13 +49,20 @@
 }
 
 .stage {
-  position: relative;
   display: grid;
   place-items: center;
   padding: var(--spacing-xl);
   background: var(--ghost-surface-bg);
   border: 1px solid var(--color-outline);
   border-radius: var(--corner-radius-md);
+}
+
+// Shrinks to the canvas so the selection's percentages line up with it and
+// its dimming shadow stays clipped to the image.
+.frame {
+  position: relative;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .canvas {

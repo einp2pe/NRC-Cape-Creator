@@ -21,6 +21,9 @@ const ELYTRA_GRADIENT = { x: 272, y: 16, width: 96, height: 160 };
 const CAPE_BOTTOM_STRIP = { x: 88, y: 0, width: 80, height: 8 };
 const ELYTRA_BOTTOM_STRIP = { x: 272, y: 0, width: 48, height: 8 };
 
+// One cape pixel: the width of the side strips and height of the top/bottom.
+const CAPE_EDGE = 8;
+
 type Box = { x: number; y: number; width: number; height: number };
 
 export type DrawOptions = {
@@ -30,6 +33,7 @@ export type DrawOptions = {
   separateElytraGradient: boolean;
   elytraGradientColors: string[] | null;
   elytraGradDirection: GradientDirection;
+  coverSides: boolean;
 };
 
 export class CanvasRenderer {
@@ -39,6 +43,7 @@ export class CanvasRenderer {
 
   private maskCanvas: HTMLCanvasElement | null = null;
   private elytraCanvas: HTMLCanvasElement | null = null;
+  private wrapCanvas: HTMLCanvasElement | null = null;
 
   constructor() {
     this.loadTemplate();
@@ -86,6 +91,7 @@ export class CanvasRenderer {
       separateElytraGradient,
       elytraGradientColors,
       elytraGradDirection,
+      coverSides,
     } = options;
 
     const elytraColors =
@@ -140,7 +146,10 @@ export class CanvasRenderer {
 
     ctx.globalCompositeOperation = "source-over";
 
-    if (images.front) this.drawImage(ctx, images.front, ZONES.front);
+    if (images.front) {
+      if (coverSides) this.drawWrappedFront(ctx, images.front);
+      else this.drawImage(ctx, images.front, ZONES.front);
+    }
     if (images.back) this.drawImage(ctx, images.back, ZONES.back);
     if (images.elytra && template) {
       this.drawMaskedElytra(ctx, template, images.elytra);
@@ -234,6 +243,72 @@ export class CanvasRenderer {
     ctx.save();
     ctx.imageSmoothingEnabled = width > 256 || height > 256;
     ctx.drawImage(image, box.x, box.y, box.width, box.height);
+    ctx.restore();
+  }
+
+  // Draws an image cropped one cape pixel larger on every side, wrapping its
+  // border onto the side strips and the top and bottom of the cape.
+  private drawWrappedFront(
+    ctx: CanvasRenderingContext2D,
+    image: HTMLImageElement
+  ) {
+    const { x, y, width, height } = ZONES.front;
+    const wrapWidth = width + CAPE_EDGE * 2;
+    const wrapHeight = height + CAPE_EDGE * 2;
+
+    this.wrapCanvas ??= document.createElement("canvas");
+    const wrapCtx = sizedContext(this.wrapCanvas, wrapWidth, wrapHeight);
+    if (!wrapCtx) return;
+
+    this.drawImage(wrapCtx, image, {
+      x: 0,
+      y: 0,
+      width: wrapWidth,
+      height: wrapHeight,
+    });
+
+    // The wrapped image shares the texture's coordinates, offset by the
+    // top strip, so the front, both sides and the top copy straight across.
+    ctx.drawImage(
+      this.wrapCanvas,
+      0,
+      CAPE_EDGE,
+      wrapWidth,
+      height,
+      x - CAPE_EDGE,
+      y,
+      wrapWidth,
+      height
+    );
+    ctx.drawImage(
+      this.wrapCanvas,
+      CAPE_EDGE,
+      0,
+      width,
+      CAPE_EDGE,
+      x,
+      y - CAPE_EDGE,
+      width,
+      CAPE_EDGE
+    );
+
+    // The bottom face is stored upside down, with its front edge at the
+    // bottom of the strip.
+    const bottom = CAPE_BOTTOM_STRIP;
+    ctx.save();
+    ctx.translate(bottom.x, bottom.y + bottom.height);
+    ctx.scale(1, -1);
+    ctx.drawImage(
+      this.wrapCanvas,
+      CAPE_EDGE,
+      CAPE_EDGE + height,
+      width,
+      CAPE_EDGE,
+      0,
+      0,
+      bottom.width,
+      bottom.height
+    );
     ctx.restore();
   }
 

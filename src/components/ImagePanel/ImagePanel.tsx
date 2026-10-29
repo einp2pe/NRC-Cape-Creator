@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 
+import { Checkbox } from "@/components/Checkbox/Checkbox";
 import { GhostButton } from "@/components/GhostButton/GhostButton";
 import { ImageCropper } from "@/components/ImageCropper/ImageCropper";
 import { CapeBackIcon } from "@/icons/CapeBackIcon";
@@ -24,6 +25,8 @@ const ZONES: { id: ImageZone; label: string; icon: React.ReactNode }[] = [
 type ImagePanelProps = {
   images: Record<ImageZone, HTMLImageElement | null>;
   onImageChange: (zone: ImageZone, image: HTMLImageElement | null) => void;
+  coverSides: boolean;
+  onCoverSidesChange: (coverSides: boolean) => void;
   onDownload: () => void;
   onReset: () => void;
   onShowTemplates: () => void;
@@ -34,6 +37,8 @@ type CropperState = { imageUrl: string; zone: ImageZone } | null;
 export const ImagePanel = ({
   images,
   onImageChange,
+  coverSides,
+  onCoverSidesChange,
   onDownload,
   onReset,
   onShowTemplates,
@@ -67,8 +72,14 @@ export const ImagePanel = ({
     onReset();
   };
 
-  const handleCropComplete = (image: HTMLImageElement) => {
-    if (cropper) onImageChange(cropper.zone, image);
+  const handleCropComplete = (
+    image: HTMLImageElement,
+    croppedWithSides: boolean
+  ) => {
+    if (cropper) {
+      onImageChange(cropper.zone, image);
+      if (cropper.zone === "front") onCoverSidesChange(croppedWithSides);
+    }
     setCropper(null);
   };
 
@@ -83,6 +94,8 @@ export const ImagePanel = ({
         <ImageCropper
           imageUrl={cropper.imageUrl}
           label={ZONES.find((zone) => zone.id === cropper.zone)?.label ?? ""}
+          canCoverSides={cropper.zone === "front"}
+          initialCoverSides={coverSides}
           onCropComplete={handleCropComplete}
           onCancel={handleCropCancel}
         />
@@ -128,6 +141,11 @@ export const ImagePanel = ({
             );
           })}
         </div>
+        <Checkbox
+          checked={coverSides}
+          onChange={onCoverSidesChange}
+          label="Cover sides"
+        />
       </section>
 
       <section className={styles.section}>

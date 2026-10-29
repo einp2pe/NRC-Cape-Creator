@@ -73,7 +73,7 @@ src/
 ├── icons/              SVG icon components, currentColor throughout
 ├── lib/utils.ts        cn() class-name helper
 ├── styles/             variables, viewports, mixins, fonts, globals
-└── utils/              CanvasRenderer, gradient, imageStore, mojang
+└── utils/              CanvasRenderer, gradient, imageStore, skin
 ```
 
 Styling is SCSS Modules on top of a CSS custom-property token layer

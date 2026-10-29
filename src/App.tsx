@@ -52,6 +52,8 @@ export default function App() {
     setElytraGradientColors,
     elytraGradDirection,
     setElytraGradDirection,
+    coverSides,
+    setCoverSides,
     reset,
     loadTemplate,
   } = useCapeState();
@@ -72,6 +74,7 @@ export default function App() {
       separateElytraGradient,
       elytraGradientColors,
       elytraGradDirection,
+      coverSides,
     });
 
     setCapeTexture(canvas.toDataURL("image/png"));
@@ -84,6 +87,7 @@ export default function App() {
     separateElytraGradient,
     elytraGradientColors,
     elytraGradDirection,
+    coverSides,
   ]);
 
   const handleDownload = useCallback(() => {
@@ -170,6 +174,8 @@ export default function App() {
           <ImagePanel
             images={images}
             onImageChange={setImage}
+            coverSides={coverSides}
+            onCoverSidesChange={setCoverSides}
             onDownload={handleDownload}
             onReset={reset}
             onShowTemplates={() => setTemplateScope("both")}

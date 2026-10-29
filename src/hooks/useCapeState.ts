@@ -23,6 +23,7 @@ type PersistedSettings = {
   separateElytraGradient: boolean;
   elytraGradientColors: string[] | null;
   elytraGradDirection: GradientDirection;
+  coverSides: boolean;
 };
 
 const DEFAULT_SETTINGS: PersistedSettings = {
@@ -31,6 +32,7 @@ const DEFAULT_SETTINGS: PersistedSettings = {
   separateElytraGradient: false,
   elytraGradientColors: null,
   elytraGradDirection: "vertical",
+  coverSides: false,
 };
 
 const asDirection = (value: unknown): GradientDirection =>
@@ -57,6 +59,7 @@ function readPersistedSettings(): PersistedSettings {
       separateElytraGradient: Boolean(parsed.separateElytraGradient),
       elytraGradientColors: asColors(parsed.elytraGradientColors),
       elytraGradDirection: asDirection(parsed.elytraGradDirection),
+      coverSides: Boolean(parsed.coverSides),
     };
   } catch {
     return DEFAULT_SETTINGS;
@@ -91,6 +94,7 @@ export function useCapeState() {
   const [elytraGradDirection, setElytraGradDirection] = useState(
     initialSettings.elytraGradDirection
   );
+  const [coverSides, setCoverSides] = useState(initialSettings.coverSides);
 
   const imagesRestored = useRef(false);
 
@@ -136,6 +140,7 @@ export function useCapeState() {
       separateElytraGradient,
       elytraGradientColors,
       elytraGradDirection,
+      coverSides,
     };
 
     try {
@@ -147,6 +152,7 @@ export function useCapeState() {
     separateElytraGradient,
     elytraGradientColors,
     elytraGradDirection,
+    coverSides,
   ]);
 
   const setImage = useCallback(
@@ -163,6 +169,7 @@ export function useCapeState() {
     setSeparateElytraGradient(DEFAULT_SETTINGS.separateElytraGradient);
     setElytraGradientColors(DEFAULT_SETTINGS.elytraGradientColors);
     setElytraGradDirection(DEFAULT_SETTINGS.elytraGradDirection);
+    setCoverSides(DEFAULT_SETTINGS.coverSides);
 
     try {
       window.localStorage.removeItem(SETTINGS_KEY);
@@ -206,6 +213,8 @@ export function useCapeState() {
     setElytraGradientColors,
     elytraGradDirection,
     setElytraGradDirection,
+    coverSides,
+    setCoverSides,
     reset,
     loadTemplate,
   };

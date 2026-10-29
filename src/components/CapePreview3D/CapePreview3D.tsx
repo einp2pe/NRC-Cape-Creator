@@ -6,7 +6,7 @@ import { Checkbox } from "@/components/Checkbox/Checkbox";
 import { GhostButton } from "@/components/GhostButton/GhostButton";
 import { SpinnerIcon } from "@/icons/SpinnerIcon";
 import { UploadIcon } from "@/icons/UploadIcon";
-import { resolveSkinUrl, SkinLookupError } from "@/utils/mojang";
+import { skinUrlFor } from "@/utils/skin";
 
 import styles from "./CapePreview3D.module.scss";
 
@@ -85,13 +85,9 @@ export const CapePreview3D = ({ capeTexture }: CapePreview3DProps) => {
       setError(null);
 
       try {
-        await viewer.loadSkin(await resolveSkinUrl(name));
-      } catch (cause) {
-        setError(
-          cause instanceof SkinLookupError
-            ? cause.message
-            : "Could not load that skin"
-        );
+        await viewer.loadSkin(skinUrlFor(name));
+      } catch {
+        setError("Could not load that skin");
         await viewer.loadSkin(DEFAULT_SKIN_URL);
       } finally {
         setLoading(false);

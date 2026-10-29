@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import styles from "./ImageCropper.module.scss";
 
 const CAPE_ASPECT = 80 / 128;
+const CAPE_WITH_SIDES_ASPECT = 96 / 144;
 
 type Rect = { x: number; y: number; width: number; height: number };
 type Point = { x: number; y: number };
@@ -15,13 +16,17 @@ type Point = { x: number; y: number };
 type ImageCropperProps = {
   imageUrl: string;
   label: string;
-  onCropComplete: (image: HTMLImageElement) => void;
+  canCoverSides?: boolean;
+  initialCoverSides?: boolean;
+  onCropComplete: (image: HTMLImageElement, coverSides: boolean) => void;
   onCancel: () => void;
 };
 
 export const ImageCropper = ({
   imageUrl,
   label,
+  canCoverSides = false,
+  initialCoverSides = false,
   onCropComplete,
   onCancel,
 }: ImageCropperProps) => {
@@ -30,6 +35,12 @@ export const ImageCropper = ({
   const dragOffset = useRef<Point | null>(null);
 
   const [aspectLocked, setAspectLocked] = useState(true);
+  const [coverSides, setCoverSides] = useState(
+    canCoverSides && initialCoverSides
+  );
+  const aspect = coverSides ? CAPE_WITH_SIDES_ASPECT : CAPE_ASPECT;
+  const aspectRef = useRef(aspect);
+  aspectRef.current = aspect;
   const [aspectBox, setAspectBox] = useState<Rect | null>(null);
   const [scalePercent, setScalePercent] = useState(60);
   const [freeStart, setFreeStart] = useState<Point | null>(null);
@@ -41,12 +52,13 @@ export const ImageCropper = ({
     (
       canvas: HTMLCanvasElement,
       percent: number,
-      previous: Rect | null
+      previous: Rect | null,
+      ratio: number
     ): Rect => {
-      const maxWidth = Math.min(canvas.width, canvas.height * CAPE_ASPECT);
+      const maxWidth = Math.min(canvas.width, canvas.height * ratio);
       const minWidth = Math.max(10, maxWidth * 0.05);
       const width = minWidth + (maxWidth - minWidth) * (percent / 100);
-      const height = width / CAPE_ASPECT;
+      const height = width / ratio;
 
       const centerX = previous
         ? previous.x + previous.width / 2
@@ -80,7 +92,7 @@ export const ImageCropper = ({
       canvas.height = image.naturalHeight || image.height;
       canvas.getContext("2d")?.drawImage(image, 0, 0);
 
-      setAspectBox(boxForScale(canvas, 60, null));
+      setAspectBox(boxForScale(canvas, 60, null, aspectRef.current));
     };
 
     image.src = imageUrl;
@@ -183,15 +195,31 @@ export const ImageCropper = ({
   const handleScaleChange = (percent: number) => {
     setScalePercent(percent);
     const canvas = canvasRef.current;
-    if (canvas) setAspectBox(boxForScale(canvas, percent, aspectBox));
+    if (canvas) setAspectBox(boxForScale(canvas, percent, aspectBox, aspect));
   };
 
   const handleToggleAspect = () => {
     const canvas = canvasRef.current;
     if (!aspectLocked && canvas) {
-      setAspectBox(boxForScale(canvas, scalePercent, aspectBox));
+      setAspectBox(boxForScale(canvas, scalePercent, aspectBox, aspect));
     }
     setAspectLocked(!aspectLocked);
+  };
+
+  const handleToggleCoverSides = () => {
+    const next = !coverSides;
+    const canvas = canvasRef.current;
+    if (canvas) {
+      setAspectBox(
+        boxForScale(
+          canvas,
+          scalePercent,
+          aspectBox,
+          next ? CAPE_WITH_SIDES_ASPECT : CAPE_ASPECT
+        )
+      );
+    }
+    setCoverSides(next);
   };
 
   const handleCrop = () => {
@@ -223,7 +251,7 @@ export const ImageCropper = ({
     );
 
     const cropped = new Image();
-    cropped.onload = () => onCropComplete(cropped);
+    cropped.onload = () => onCropComplete(cropped, coverSides);
     cropped.src = cropCanvas.toDataURL();
   };
 
@@ -258,17 +286,19 @@ export const ImageCropper = ({
         </header>
 
         <div className={styles.stage}>
-          <canvas
-            ref={canvasRef}
-            className={cn(styles.canvas, isDraggingBox && styles.grabbing)}
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-            onPointerCancel={handlePointerUp}
-          />
-          {overlayStyle && (
-            <div className={styles.selection} style={overlayStyle} />
-          )}
+          <div className={styles.frame}>
+            <canvas
+              ref={canvasRef}
+              className={cn(styles.canvas, isDraggingBox && styles.grabbing)}
+              onPointerDown={handlePointerDown}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+              onPointerCancel={handlePointerUp}
+            />
+            {overlayStyle && (
+              <div className={styles.selection} style={overlayStyle} />
+            )}
+          </div>
         </div>
 
         <div className={styles.controls}>
@@ -280,6 +310,17 @@ export const ImageCropper = ({
           >
             Lock cape ratio
           </GhostButton>
+
+          {canCoverSides && (
+            <GhostButton
+              variant={coverSides ? "purple" : "gray"}
+              size="sm"
+              onClick={handleToggleCoverSides}
+              aria-pressed={coverSides}
+            >
+              Cover sides
+            </GhostButton>
+          )}
 
           {aspectLocked && (
             <label className={styles.scale}>
@@ -303,7 +344,9 @@ export const ImageCropper = ({
         <footer className={styles.footer}>
           <GhostButton onClick={onCancel}>Cancel</GhostButton>
           <GhostButton
-            onClick={() => imageRef.current && onCropComplete(imageRef.current)}
+            onClick={() =>
+              imageRef.current && onCropComplete(imageRef.current, coverSides)
+            }
           >
             Use full image
           </GhostButton>
